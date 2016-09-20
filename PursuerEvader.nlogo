@@ -1,36 +1,48 @@
-turtles-own [ energy ]
+extensions [matrix]
+turtles-own [ ispursuer? isevader? idnumber]
 links-own [ weight ]
 breed [ pursuers pursuer ]
 breed [ evaders evader ]
-
-
+globals [AMatrix]
+ 
 to setup
-  let user-id ""
-  clear-all                       ;; clear everything on canvas
+                        ;; clear everything on canvas
   ifelse ( (no-of-nodes > 0) and (no-of-nodes >= (no-of-pursuers + no-of-evaders) ) ) 
    [
+       clear-all 
        setup-nodes                     ;; a procedure to set nodes
        setup-edges                     ;; a procedure to set edges
        ask turtles [ set color red]    ;; paint nodes red
        ask links [set color white]     ;; paint edges white
        initialize-pursuers
        initialize-evaders
+       set AMatrix matrix:make-constant no-of-nodes no-of-nodes 0
+       printAlist
+       reset-ticks
   ]
   [
      user-message ("not enough nodes for pursuers and evaders")
   ]
-  reset-ticks
+ 
+end
+
+to printAlist
+ print matrix:pretty-print-text AMatrix
+  
 end
 
 to setup-nodes
   set-default-shape turtles "circle"
-  ask turtles [ set energy 1 ]
+  ask turtles [ set ispursuer? false ]
+  ask turtles [set isevader? false]
+  ask turtles [ set idnumber who ]
   create-turtles no-of-nodes ;; users give this number from the interface
   [
     ; for visual reasons, we don't put any nodes *too* close to the edges
     setxy (random-xcor * 0.95) (random-ycor * 0.95)
   ]
 end
+
 
 to setup-edges
   while [ count links < no-of-links ] ;; num-links given by the user from interface
@@ -43,9 +55,16 @@ to setup-edges
     ;] 
      ask one-of turtles
     [
+      let idnum [who] of turtles
       let choice (min-one-of (other turtles with [not link-neighbor? myself])
                    [distance myself])
-      if choice != nobody [ create-link-with choice ]
+      if choice != nobody [
+         create-link-with choice
+         let cidnum [who] of choice
+         matrix:set AMatrix idnum cidnum 1
+         matrix:set AMatrix cidnum idnum 1
+         
+         ]
     ]
   ]
     ; make the network look a little prettier
@@ -56,12 +75,17 @@ to setup-edges
 end
 
 to go  
-  ifelse ( (all? evaders [color = red]) or (ticks >= 500)) [ set no-of-evaders 0 stop ]
+  ;ifelse ( (all? evaders [color = red]) or (ticks >= 500)) [ set no-of-evaders 0 stop ]
+  ;[
+  ;ifelse ticks mod 2 = 0 
+  ;   [pursuit-strategy]
+  ;   [evader-strategy]
+  ; check-capture
+  ;]
+  ifelse (ticks >= 500)
+  [stop]
   [
-  ifelse ticks mod 2 = 0 
-     [pursuit-strategy]
-     [evader-strategy]
-   check-capture
+    
   ]
   tick
 end
@@ -101,8 +125,8 @@ to initialize-pursuers
       ask one-of turtles 
       [
         ;set pur (pur + 1)
-        set color yellow
-      ;;  set turtles "triangle"
+        set color yellow 
+        set ispursuer? true 
         set breed pursuers
       ] 
     ]
@@ -118,20 +142,15 @@ to initialize-evaders
       [
         let choice one-of other turtles
 
-        if breed != pursuers 
+        if ispursuer? != true 
         [
          
           set color blue
           set breed evaders
+          set isevader? true
         ]
       ] 
     ]
-end
-
-to check-death
-  ask turtles [
-    if energy < 0 [ die ]
-  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -201,7 +220,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-200
+5
 1
 0
 Number
@@ -212,7 +231,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-100
+2
 1
 0
 Number
@@ -223,7 +242,7 @@ INPUTBOX
 191
 130
 no-of-links
-400
+8
 1
 0
 Number
@@ -234,10 +253,17 @@ INPUTBOX
 192
 193
 no-of-evaders
-0
+2
 1
 0
 Number
+
+OUTPUT
+3
+227
+237
+362
+12
 
 @#$#@#$#@
 ## WHAT IS IT?
