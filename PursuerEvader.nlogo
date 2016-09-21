@@ -3,20 +3,21 @@ turtles-own [ ispursuer? isevader? idnumber]
 links-own [ weight ]
 breed [ pursuers pursuer ]
 breed [ evaders evader ]
-globals [AMatrix]
+globals [AMatrix DMatrix]
  
 to setup
                         ;; clear everything on canvas
   ifelse ( (no-of-nodes > 0) and (no-of-nodes >= (no-of-pursuers + no-of-evaders) ) ) 
    [
        clear-all 
+       set AMatrix matrix:make-constant no-of-nodes no-of-nodes 0
+       set DMatrix matrix:make-constant no-of-nodes no-of-nodes 0
        setup-nodes                     ;; a procedure to set nodes
        setup-edges                     ;; a procedure to set edges
        ask turtles [ set color red]    ;; paint nodes red
        ask links [set color white]     ;; paint edges white
        initialize-pursuers
-       initialize-evaders
-       set AMatrix matrix:make-constant no-of-nodes no-of-nodes 0
+       initialize-evaders 
        printAlist
        reset-ticks
   ]
@@ -52,19 +53,26 @@ to setup-edges
      ; let choice one-of other turtles
 
      ; if choice != nobody [ create-link-with choice ]
-    ;] 
-     ask one-of turtles
+    ;]
+    ask one-of turtles
     [
-      let idnum [who] of turtles
+      let idnum 0
+      let cidnum 0
       let choice (min-one-of (other turtles with [not link-neighbor? myself])
                    [distance myself])
       if choice != nobody [
-         create-link-with choice
-         let cidnum [who] of choice
-         matrix:set AMatrix idnum cidnum 1
-         matrix:set AMatrix cidnum idnum 1
-         
+         create-link-with choice       
+         ;print (word "link count: " count links )
+         ask links[
+           set cidnum [who] of end1
+           set idnum [who] of end2
+           ;print (word "choice num: " cidnum )
+           ;print (word "idnum: " idnum )
+           ;print (word "\n" );
+           matrix:set AMatrix idnum cidnum 1
+           matrix:set AMatrix cidnum idnum 1
          ]
+      ]
     ]
   ]
     ; make the network look a little prettier
@@ -220,7 +228,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-5
+3
 1
 0
 Number
@@ -231,7 +239,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-2
+1
 1
 0
 Number
@@ -242,7 +250,7 @@ INPUTBOX
 191
 130
 no-of-links
-8
+2
 1
 0
 Number
@@ -253,17 +261,10 @@ INPUTBOX
 192
 193
 no-of-evaders
-2
+1
 1
 0
 Number
-
-OUTPUT
-3
-227
-237
-362
-12
 
 @#$#@#$#@
 ## WHAT IS IT?
