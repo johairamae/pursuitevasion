@@ -1,9 +1,9 @@
-extensions [matrix]
+extensions [matrix array]
 turtles-own [ ispursuer? isevader? idnumber]
 links-own [ weight ]
 breed [ pursuers pursuer ]
 breed [ evaders evader ]
-globals [AMatrix DMatrix]
+globals [AMatrix DMatrix Plist Elist]
  
 to setup
                         ;; clear everything on canvas
@@ -11,14 +11,18 @@ to setup
    [
        clear-all 
        set AMatrix matrix:make-constant no-of-nodes no-of-nodes 0
-       set DMatrix matrix:make-constant no-of-nodes no-of-nodes 0
+       set DMatrix matrix:make-constant no-of-nodes no-of-nodes 999999
+       set Plist []
+       set Elist []
        setup-nodes                     ;; a procedure to set nodes
        setup-edges                     ;; a procedure to set edges
        ask turtles [ set color red]    ;; paint nodes red
        ask links [set color white]     ;; paint edges white
        initialize-pursuers
        initialize-evaders 
-       printAlist
+       printPlist
+       printElist
+       printAMatrix
        reset-ticks
   ]
   [
@@ -27,9 +31,16 @@ to setup
  
 end
 
-to printAlist
+to printAMatrix
  print matrix:pretty-print-text AMatrix
-  
+end
+
+to printPlist
+  print (Plist)
+end
+
+to printElist
+  print (Elist)
 end
 
 to setup-nodes
@@ -83,27 +94,27 @@ to setup-edges
 end
 
 to go  
-  ;ifelse ( (all? evaders [color = red]) or (ticks >= 500)) [ set no-of-evaders 0 stop ]
-  ;[
-  ;ifelse ticks mod 2 = 0 
-  ;   [pursuit-strategy]
-  ;   [evader-strategy]
-  ; check-capture
-  ;]
-  ifelse (ticks >= 500)
-  [stop]
+  ifelse ( (all? evaders [color = red]) or (ticks >= 500)) [ set no-of-evaders 0 stop ]
   [
-    
+  ifelse ticks mod 2 = 0 
+     [pursuit-strategy]
+     [evader-strategy]
+   ;check-capture
   ]
+  
   tick
 end
 
 to pursuit-strategy
-  
+  dijkstra
 end
 
 to evader-strategy
   
+end
+
+to dijkstra
+
 end
 
 to check-capture
@@ -127,23 +138,21 @@ end
 
 to initialize-pursuers
   set-default-shape pursuers "triangle"
-  
   while [ count pursuers != no-of-pursuers] ;; num of pursuers given by the user from interface
     [ 
       ask one-of turtles 
       [
-        ;set pur (pur + 1)
         set color yellow 
         set ispursuer? true 
         set breed pursuers
+        set Plist lput who Plist
       ] 
     ]
-  
+  set Plist remove-duplicates Plist
 end
 
 to initialize-evaders
   set-default-shape evaders "square"
-  ;let eva 0
   while [ count evaders != no-of-evaders]  ;; num of evaders given by the user from interface
     [
       ask one-of turtles 
@@ -151,20 +160,21 @@ to initialize-evaders
         let choice one-of other turtles
 
         if ispursuer? != true 
-        [
-         
+        [         
           set color blue
           set breed evaders
           set isevader? true
+          set Elist lput who Elist
         ]
       ] 
     ]
+    set Elist remove-duplicates Elist
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-236
+237
 10
-727
+728
 574
 18
 20
@@ -228,7 +238,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-3
+8
 1
 0
 Number
@@ -239,7 +249,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-1
+2
 1
 0
 Number
@@ -250,7 +260,7 @@ INPUTBOX
 191
 130
 no-of-links
-2
+13
 1
 0
 Number
@@ -261,7 +271,7 @@ INPUTBOX
 192
 193
 no-of-evaders
-1
+3
 1
 0
 Number
