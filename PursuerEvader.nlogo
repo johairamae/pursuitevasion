@@ -23,6 +23,7 @@ to setup
        printPlist
        printElist
        printAMatrix
+       nearestEtoP               ;a function to compute the nearest evader to every pursuer
        reset-ticks
   ]
   [
@@ -106,15 +107,11 @@ to go
 end
 
 to pursuit-strategy
-  dijkstra
+  ;dijkstra
 end
 
 to evader-strategy
   
-end
-
-to dijkstra
-
 end
 
 to check-capture
@@ -170,6 +167,40 @@ to initialize-evaders
     ]
     set Elist remove-duplicates Elist
 end
+
+to nearestEtoP
+  let pcounter 0
+  let ecounter 0
+  let currentp 9999
+  let currente 9999
+  let sample 9999
+  let sample2 9999
+   
+  while [pcounter != no-of-pursuers ]
+  [
+    set currentp item pcounter Plist
+    while [ecounter != no-of-evaders ]
+    [
+     set currente item ecounter Elist
+     dijkstra currentp currente
+     set ecounter ecounter + 1 
+    ]
+    set pcounter pcounter + 1
+    set ecounter 0
+  ]
+end
+to dijkstra [source target]
+  print(word "pursuer: " source)
+  print(word "evader: " target)
+  
+end
+ ;foreach sort tempPlist [
+   ; ask ? [
+    ;  foreach sort tempElist [
+     ;   
+      ;]
+    ;];
+   ;]
 @#$#@#$#@
 GRAPHICS-WINDOW
 237
@@ -249,7 +280,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-2
+3
 1
 0
 Number
