@@ -83,6 +83,8 @@ to setup-edges
            ;print (word "\n" );
            matrix:set AMatrix idnum cidnum 1
            matrix:set AMatrix cidnum idnum 1
+           matrix:set DMatrix idnum cidnum 1
+           matrix:set DMatrix cidnum idnum 1
          ]
       ]
     ]
@@ -192,15 +194,69 @@ end
 to dijkstra [source target]
   print(word "pursuer: " source)
   print(word "evader: " target)
+  let distlist []
+  let selected []
+  let prev []
+  let path []
+  let start source
+  let i 0
+  let m 0
+  let mini 0
+  let d 0
+  let j 0
+  ;initialization of lists
+  while [i != no-of-nodes]
+  [
+     
+   set distlist lput 9999 distlist
+   set prev lput -1 prev 
+   set selected lput 0 selected
+   set i i + 1
+  ]
   
+  set selected replace-item source  selected 1
+  set distlist replace-item source distlist 0
+  set i 0
+  while [ (item target selected) = 0]
+  [
+    set mini 9999
+    set m 0
+    while [ i != no-of-nodes ]
+    [
+      print (word "iteration: " i )     
+      set d ( item start distlist + ( matrix:get DMatrix start i  ) )
+       print (word "d: " d)
+       print (word "distlist[" i word "]" item i distlist)
+       
+      if ( d < (item i distlist)) and (item i selected = 0)
+      [
+        set distlist replace-item i distlist d
+        set prev replace-item i prev start
+      ]
+      
+      if ( mini > ( item i distlist)) and (item i selected = 0) 
+      [
+        set mini ( item i distlist)
+        set m i
+      ]
+      set i i + 1
+    ]
+    
+    set start m
+    set selected replace-item start selected 1
+  ]
+  set start target
+  ;set j 0
+  while [ start != -1 ]
+  [
+    ;try fput here
+    set path fput start path
+    set start item start prev 
+  ]
+  
+  print (word "path " path)
+  print (word "cost to target: " item target distlist)
 end
- ;foreach sort tempPlist [
-   ; ask ? [
-    ;  foreach sort tempElist [
-     ;   
-      ;]
-    ;];
-   ;]
 @#$#@#$#@
 GRAPHICS-WINDOW
 237
