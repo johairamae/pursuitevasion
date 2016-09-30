@@ -10,8 +10,9 @@ to setup
   ifelse ( (no-of-nodes > 0) and (no-of-nodes >= (no-of-pursuers + no-of-evaders) ) ) 
    [
        clear-all 
-       set AMatrix matrix:make-constant no-of-nodes no-of-nodes 0
-       set DMatrix matrix:make-constant no-of-nodes no-of-nodes 999999
+       ;set AMatrix matrix:make-constant no-of-nodes no-of-nodes 0
+       ;set DMatrix matrix:make-constant no-of-nodes no-of-nodes 999
+       set Dmatrix matrix:from-row-list [[0 0 1 0 0 0 1 0] [0 0 0 1 1 1 0 1] [1 0 0 0 1 0 0 0] [0 1 0 0 1 0 0 0] [0 1 1 1 0 1 1 1]]
        set Plist []
        set Elist []
        setup-nodes                     ;; a procedure to set nodes
@@ -81,10 +82,10 @@ to setup-edges
            ;print (word "choice num: " cidnum )
            ;print (word "idnum: " idnum )
            ;print (word "\n" );
-           matrix:set AMatrix idnum cidnum 1
-           matrix:set AMatrix cidnum idnum 1
-           matrix:set DMatrix idnum cidnum 1
-           matrix:set DMatrix cidnum idnum 1
+           ;matrix:set AMatrix idnum cidnum 1
+           ;matrix:set AMatrix cidnum idnum 1
+           ;matrix:set DMatrix idnum cidnum 1
+           ;matrix:set DMatrix cidnum idnum 1
          ]
       ]
     ]
@@ -184,7 +185,7 @@ to nearestEtoP
     while [ecounter != no-of-evaders ]
     [
      set currente item ecounter Elist
-     dijkstra currentp currente
+     ;dijkstra currentp currente
      set ecounter ecounter + 1 
     ]
     set pcounter pcounter + 1
@@ -214,12 +215,12 @@ to dijkstra [source target]
    set i i + 1
   ]
   
-  set selected replace-item source  selected 1
-  set distlist replace-item source distlist 0
+  set selected replace-item start  selected 1
+  set distlist replace-item start distlist 0
   set i 0
   while [ (item target selected) = 0]
   [
-    set mini 9999
+    set mini 999
     set m 0
     while [ i != no-of-nodes ]
     [
