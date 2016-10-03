@@ -1,9 +1,9 @@
-extensions [matrix array]
+extensions [matrix array table]
 turtles-own [ ispursuer? isevader? idnumber]
 links-own [ weight ]
 breed [ pursuers pursuer ]
 breed [ evaders evader ]
-globals [AMatrix cost Plist Elist]
+globals [AMatrix cost Plist Elist PEtable ]
  
 to setup
                         ;; clear everything on canvas
@@ -78,9 +78,6 @@ to setup-edges
          ask links[
            set cidnum [who] of end1
            set idnum [who] of end2
-           ;print (word "choice num: " cidnum )
-           ;print (word "idnum: " idnum )
-           ;print (word "\n" );
            matrix:set AMatrix idnum cidnum 1
            matrix:set AMatrix cidnum idnum 1
            matrix:set cost idnum cidnum 1
@@ -102,7 +99,7 @@ to go
   ifelse ticks mod 2 = 0 
      [pursuit-strategy]
      [evader-strategy]
-   ;check-capture
+   check-capture
   ]
   
   tick
@@ -173,10 +170,12 @@ end
 to nearestEtoP
   let pcounter 0
   let ecounter 0
+  ;let co 999999
   let currentp 9999
   let currente 9999
-  let sample 9999
-  let sample2 9999
+  let costlist []
+  let templist []
+  set PEtable table:make
   
   while [pcounter != no-of-pursuers ]
   [
@@ -184,15 +183,24 @@ to nearestEtoP
     while [ecounter != no-of-evaders ]
     [
      set currente item ecounter Elist
-     dijkstra currentp currente
+     set costlist lput dijkstra currentp currente costlist
      set ecounter ecounter + 1 
     ]
+    print (word "costlist of pursuer " item pcounter Plist costlist)
+    let minvalue min map first costlist
+    let minindex position minvalue map first costlist
+    print(word "min " minvalue word "min index " minindex)
+    set templist item 1 item minindex costlist
+    print(word "path " templist );
+    table:put PEtable item minindex Elist templist 
     set pcounter pcounter + 1
     set ecounter 0
+    set costlist []
   ]
+  print(word "pursuit evader table " PEtable );
 end
 
-to dijkstra [source target]
+to-report dijkstra [source target]
   print(word "pursuer: " source)
   print(word "evader: " target)
   let distlist []
@@ -225,17 +233,12 @@ to dijkstra [source target]
     set i 0
     while [ i != no-of-nodes ]
     [
-      ;print (word "iteration: " i )     
       set d ( item start distlist + ( matrix:get cost start i  ) )
-      ;print (word "d: " d)
-      ; print (word "distlist[" i word "]" item i distlist)
-       
       if ( (d < (item i distlist)) and (item i selected = 0) )
       [
         set distlist replace-item i distlist d
         set prev replace-item i prev start
       ]
-      
       if (( mini > ( item i distlist)) and (item i selected = 0)) 
       [
         set mini ( item i distlist)
@@ -243,21 +246,20 @@ to dijkstra [source target]
       ]
       set i i + 1
     ]
-    
-    set start m
-    set selected replace-item start selected 1
+   set start m
+   set selected replace-item start selected 1
   ]
+  ;reversing the path to traverse from source to target
   set start target
-  ;set j 0
   while [ start != -1 ]
   [
-    ;try fput here
     set path fput start path
     set start item start prev 
   ]
   
   print (word "path " path)
   print (word "cost to target: " item target distlist)
+  report (list item target distlist path)  
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
