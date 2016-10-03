@@ -1,195 +1,9 @@
-extensions [matrix array]
-turtles-own [ ispursuer? isevader? idnumber]
-links-own [ weight ]
-breed [ pursuers pursuer ]
-breed [ evaders evader ]
-globals [AMatrix cost Plist Elist]
- 
+extensions[matrix]
+globals [cost]
+
 to setup
-                        ;; clear everything on canvas
-  ifelse ( (no-of-nodes > 0) and (no-of-nodes >= (no-of-pursuers + no-of-evaders) ) ) 
-   [
-       clear-all 
-       set AMatrix matrix:make-constant no-of-nodes no-of-nodes 0
-       set cost matrix:make-constant no-of-nodes no-of-nodes 999
-       set Plist []
-       set Elist []
-       setup-nodes                     ;; a procedure to set nodes
-       setup-edges                     ;; a procedure to set edges
-       ask turtles [ set color red]    ;; paint nodes red
-       ask links [set color white]     ;; paint edges white
-       initialize-pursuers
-       initialize-evaders 
-       printPlist
-       printElist
-       printAMatrix
-       nearestEtoP               ;a function to compute the nearest evader to every pursuer
-       reset-ticks
-  ]
-  [
-     user-message ("not enough nodes for pursuers and evaders")
-  ]
- 
-end
+set cost matrix:from-row-list [[0 0 1 0 0 0 1 0] [0 0 0 1 1 1 0 1] [1 0 0 0 1 0 0 0] [0 1 0 0 1 0 0 0] [0 1 1 1 0 1 1 1] [0 1 0 0 1 0 0 1] [1 0 0 0 1 0 0 1] [0 1 0 0 1 1 1 0]]
 
-to printAMatrix
- print matrix:pretty-print-text cost
-end
-
-to printPlist
-  print (Plist)
-end
-
-to printElist
-  print (Elist)
-end
-
-to setup-nodes
-  set-default-shape turtles "circle"
-  ask turtles [ set ispursuer? false ]
-  ask turtles [set isevader? false]
-  ask turtles [ set idnumber who ]
-  create-turtles no-of-nodes ;; users give this number from the interface
-  [
-    ; for visual reasons, we don't put any nodes *too* close to the edges
-    setxy (random-xcor * 0.95) (random-ycor * 0.95)
-  ]
-end
-
-
-to setup-edges
-  while [ count links < no-of-links ] ;; num-links given by the user from interface
-  [
-    ;ask one-of turtles 
-    ;[
-     ; let choice one-of other turtles
-
-     ; if choice != nobody [ create-link-with choice ]
-    ;]
-    ask one-of turtles
-    [
-      let idnum 0
-      let cidnum 0
-      let choice (min-one-of (other turtles with [not link-neighbor? myself])
-                   [distance myself])
-      if choice != nobody [
-         create-link-with choice       
-         ;print (word "link count: " count links )
-         ask links[
-           set cidnum [who] of end1
-           set idnum [who] of end2
-           ;print (word "choice num: " cidnum )
-           ;print (word "idnum: " idnum )
-           ;print (word "\n" );
-           matrix:set AMatrix idnum cidnum 1
-           matrix:set AMatrix cidnum idnum 1
-           matrix:set cost idnum cidnum 1
-           matrix:set cost cidnum idnum 1
-         ]
-      ]
-    ]
-  ]
-    ; make the network look a little prettier
-    repeat 10
-    [
-      layout-spring turtles links 0.3 (world-width / (sqrt no-of-nodes)) 1
-    ]
-end
-
-to go  
-  ifelse ( (all? evaders [color = red]) or (ticks >= 500)) [ set no-of-evaders 0 stop ]
-  [
-  ifelse ticks mod 2 = 0 
-     [pursuit-strategy]
-     [evader-strategy]
-   ;check-capture
-  ]
-  
-  tick
-end
-
-to pursuit-strategy
-  ;dijkstra
-end
-
-to evader-strategy
-  
-end
-
-to check-capture
-  remove-pursuer
-end
-
-to remove-pursuer
-  let counter 0
-  while [counter = 0]
-  [
-    ask one-of evaders with [color = blue]
-    [
-       set color red
-       set shape "circle"
-       set counter (counter + 1) 
-      ; set no-of-evaders (no-of-evaders - 1)
-     ]
-   
-  ]
-end
-
-to initialize-pursuers
-  set-default-shape pursuers "triangle"
-  while [ count pursuers != no-of-pursuers] ;; num of pursuers given by the user from interface
-    [ 
-      ask one-of turtles 
-      [
-        set color yellow 
-        set ispursuer? true 
-        set breed pursuers
-        set Plist lput who Plist
-      ] 
-    ]
-  set Plist remove-duplicates Plist
-end
-
-to initialize-evaders
-  set-default-shape evaders "square"
-  while [ count evaders != no-of-evaders]  ;; num of evaders given by the user from interface
-    [
-      ask one-of turtles 
-      [
-        let choice one-of other turtles
-
-        if ispursuer? != true 
-        [         
-          set color blue
-          set breed evaders
-          set isevader? true
-          set Elist lput who Elist
-        ]
-      ] 
-    ]
-    set Elist remove-duplicates Elist
-end
-
-to nearestEtoP
-  let pcounter 0
-  let ecounter 0
-  let currentp 9999
-  let currente 9999
-  let sample 9999
-  let sample2 9999
-  
-  while [pcounter != no-of-pursuers ]
-  [
-    set currentp item pcounter Plist
-    while [ecounter != no-of-evaders ]
-    [
-     set currente item ecounter Elist
-     dijkstra currentp currente
-     set ecounter ecounter + 1 
-    ]
-    set pcounter pcounter + 1
-    set ecounter 0
-  ]
 end
 
 to dijkstra [source target]
@@ -226,7 +40,7 @@ to dijkstra [source target]
     while [ i != no-of-nodes ]
     [
       ;print (word "iteration: " i )     
-      set d ( item start distlist + ( matrix:get cost start i  ) )
+      set d ( item start distlist + ( matrix:get DMatrix start i  ) )
       ;print (word "d: " d)
       ; print (word "distlist[" i word "]" item i distlist)
        
@@ -261,12 +75,12 @@ to dijkstra [source target]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-237
+210
 10
-728
-574
-18
-20
+649
+470
+16
+16
 13.0
 1
 10
@@ -277,24 +91,24 @@ GRAPHICS-WINDOW
 1
 1
 1
--18
-18
--20
-20
-1
-1
+-16
+16
+-16
+16
+0
+0
 1
 ticks
 30.0
 
 BUTTON
+46
 20
-22
-86
-55
-NIL
+112
+53
 setup
 NIL
+NIL
 1
 T
 OBSERVER
@@ -303,67 +117,6 @@ NIL
 NIL
 NIL
 1
-
-BUTTON
-101
-23
-164
-56
-NIL
-go
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-0
-
-INPUTBOX
-15
-69
-103
-129
-no-of-nodes
-8
-1
-0
-Number
-
-INPUTBOX
-14
-134
-103
-194
-no-of-pursuers
-3
-1
-0
-Number
-
-INPUTBOX
-107
-70
-191
-130
-no-of-links
-13
-1
-0
-Number
-
-INPUTBOX
-106
-133
-192
-193
-no-of-evaders
-3
-1
-0
-Number
 
 @#$#@#$#@
 ## WHAT IS IT?
