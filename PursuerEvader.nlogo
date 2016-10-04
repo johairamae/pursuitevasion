@@ -99,37 +99,56 @@ to go
   ifelse ticks mod 2 = 0 
      [pursuit-strategy]
      [evader-strategy]
-   check-capture
   ]
   
   tick
 end
-
+to move-to-node [cnode nnode]
+  
+  ;return turtle to normal state
+  ask turtle cnode
+  [
+   set color red
+   set shape "circle"
+   set breed turtles
+   if ispursuer? = true
+   [
+     set ispursuer? false
+     ask turtle nnode
+     [
+      set color yellow 
+      set shape "triangle"
+      set ispursuer? true 
+      set breed pursuers
+      let cnodeindex position cnode Plist
+      set Plist replace-item cnodeindex Plist nnode
+      ;set Plist lput who Plist  
+     ]
+   ]
+   if isevader? = true
+   [
+     set isevader? false
+     ask turtle nnode
+     [
+       set color blue 
+       set shape "square"
+       set isevader? true 
+       set breed evaders
+       let cnodeindex position cnode Elist
+       set Elist replace-item cnodeindex Elist nnode
+       ;set Plist lput who Plist 
+     ]
+   ] 
+  ]
+end
 to pursuit-strategy
+  move-to-node 0 1
+  if no-of-nodes 
   ;dijkstra
 end
 
 to evader-strategy
   
-end
-
-to check-capture
-  remove-pursuer
-end
-
-to remove-pursuer
-  let counter 0
-  while [counter = 0]
-  [
-    ask one-of evaders with [color = blue]
-    [
-       set color red
-       set shape "circle"
-       set counter (counter + 1) 
-      ; set no-of-evaders (no-of-evaders - 1)
-     ]
-   
-  ]
 end
 
 to initialize-pursuers
@@ -175,7 +194,7 @@ to nearestEtoP
   let currente 9999
   let costlist []
   let templist []
-  set PEtable table:make
+  set PEtable []
   
   while [pcounter != no-of-pursuers ]
   [
@@ -186,13 +205,15 @@ to nearestEtoP
      set costlist lput dijkstra currentp currente costlist
      set ecounter ecounter + 1 
     ]
-    print (word "costlist of pursuer " item pcounter Plist costlist)
+    ;print (word "costlist of pursuer " item pcounter Plist costlist)
     let minvalue min map first costlist
     let minindex position minvalue map first costlist
-    print(word "min " minvalue word "min index " minindex)
+    ;print(word "min " minvalue word "min index " minindex)
     set templist item 1 item minindex costlist
-    print(word "path " templist );
-    table:put PEtable item minindex Elist templist 
+    ;print(word "path " templist );
+    ;print(word "evader" item minindex Elist)
+    let evader1 item minindex Elist
+    set PEtable lput (list evader1 templist) PEtable
     set pcounter pcounter + 1
     set ecounter 0
     set costlist []
@@ -257,8 +278,8 @@ to-report dijkstra [source target]
     set start item start prev 
   ]
   
-  print (word "path " path)
-  print (word "cost to target: " item target distlist)
+  ;print (word "path " path)
+  ;print (word "cost to target: " item target distlist)
   report (list item target distlist path)  
 end
 @#$#@#$#@
@@ -329,7 +350,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-8
+3
 1
 0
 Number
@@ -340,7 +361,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-3
+1
 1
 0
 Number
@@ -351,7 +372,7 @@ INPUTBOX
 191
 130
 no-of-links
-13
+2
 1
 0
 Number
@@ -362,7 +383,7 @@ INPUTBOX
 192
 193
 no-of-evaders
-3
+0
 1
 0
 Number
