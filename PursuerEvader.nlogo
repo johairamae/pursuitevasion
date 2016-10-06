@@ -93,18 +93,27 @@ to setup-edges
     ]
 end
 
-to go  
-  ifelse ( (all? evaders [color = red]) or (ticks >= 500)) [ set no-of-evaders 0 stop ]
-  [
-  ifelse ticks mod 2 = 0 
-     [pursuit-strategy]
-     [evader-strategy]
-  ]
+to go 
+  let tiktok ticks
+  set tiktok ticks mod 2
   
-  tick
+  if ( (all? evaders [color = red]) or (ticks >= 500))
+  [
+     set no-of-evaders 0 
+     stop
+  ]
+ 
+  ifelse (tiktok = 0) 
+     [
+       pursuit-strategy
+     ]
+     [
+       evader-strategy 
+     ]
+  tick 
 end
 to move-to-node [cnode nnode]
-  
+  print(word "source" cnode word"target " nnode)
   ;return turtle to normal state
   ask turtle cnode
   [
@@ -116,13 +125,16 @@ to move-to-node [cnode nnode]
      set ispursuer? false
      ask turtle nnode
      [
+       if breed = evaders
+       [
+        ;set kung evader ung next node  
+       ]
       set color yellow 
       set shape "triangle"
       set ispursuer? true 
       set breed pursuers
       let cnodeindex position cnode Plist
-      set Plist replace-item cnodeindex Plist nnode
-      ;set Plist lput who Plist  
+      set Plist replace-item cnodeindex Plist nnode 
      ]
    ]
    if isevader? = true
@@ -130,25 +142,44 @@ to move-to-node [cnode nnode]
      set isevader? false
      ask turtle nnode
      [
+       if breed = pursuers
+       [
+         set color yellow 
+         set shape "triangle"
+         set ispursuer? true 
+         set breed pursuers
+         let cnodeindex position cnode Plist
+         set Plist replace-item cnodeindex Plist nnode 
+       ]
        set color blue 
        set shape "square"
        set isevader? true 
        set breed evaders
        let cnodeindex position cnode Elist
        set Elist replace-item cnodeindex Elist nnode
-       ;set Plist lput who Plist 
      ]
    ] 
   ]
 end
 to pursuit-strategy
-  move-to-node 0 1
-  if no-of-nodes 
-  ;dijkstra
+  ;move-to-node 0 1
+  ifelse no-of-nodes = 2
+  [
+    move-to-node item 0 Plist item 0 Elist
+  ]
+  [
+    
+  ]
 end
 
 to evader-strategy
-  
+  ask turtles
+  [
+    let emover [who] of one-of evaders
+    let etarget [who] of one-of link-neighbors
+    move-to-node emover etarget
+    print(word "hoy")
+  ]
 end
 
 to initialize-pursuers
@@ -383,7 +414,7 @@ INPUTBOX
 192
 193
 no-of-evaders
-0
+1
 1
 0
 Number
