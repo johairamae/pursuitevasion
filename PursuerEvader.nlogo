@@ -111,10 +111,11 @@ to go
  [
   ;ifelse (tiktok = 0) 
   ;   [
-       pursuit-strategy
+       evader-strategy
   ;   ]
   ;   [
-       evader-strategy 
+      if count evaders > 0
+       [ pursuit-strategy ]
   ;   ]
   ]
   tick 
@@ -181,7 +182,7 @@ to pursuit-strategy
     move-to-node item 0 Plist item 0 Elist
   ]
   [
-    print(word "pursuit strategy")
+    print(word "pursuit strategy")   
   ]
 end
 
@@ -394,7 +395,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-8
+3
 1
 0
 Number
@@ -416,7 +417,7 @@ INPUTBOX
 191
 130
 no-of-links
-13
+2
 1
 0
 Number
