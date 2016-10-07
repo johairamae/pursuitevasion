@@ -7,7 +7,7 @@ globals [AMatrix cost Plist Elist PEtable ]
  
 to setup
                         ;; clear everything on canvas
-  ifelse ( (no-of-nodes > 0) and (no-of-nodes >= (no-of-pursuers + no-of-evaders) ) ) 
+  ifelse ( (no-of-nodes > 0) and (no-of-nodes >= (no-of-pursuers + no-of-evaders)) and (no-of-evaders > 0) ) 
    [
        clear-all 
        set AMatrix matrix:make-constant no-of-nodes no-of-nodes 0
@@ -27,7 +27,13 @@ to setup
        reset-ticks
   ]
   [
+    ifelse no-of-evaders = 0
+    [
+     user-message ("no evaders to pursue") 
+    ]
+    [
      user-message ("not enough nodes for pursuers and evaders")
+    ]
   ]
  
 end
@@ -96,20 +102,21 @@ end
 to go 
   let tiktok ticks
   set tiktok ticks mod 2
-  
-  if ( (all? evaders [color = red]) or (ticks >= 500))
+  print(word "evaders count: " count evaders word "tick: " ticks)
+  ifelse ( (count evaders = 0 ) or (ticks >= 500))
   [
      set no-of-evaders 0 
      stop
   ]
- 
-  ifelse (tiktok = 0) 
-     [
+ [
+  ;ifelse (tiktok = 0) 
+  ;   [
        pursuit-strategy
-     ]
-     [
+  ;   ]
+  ;   [
        evader-strategy 
-     ]
+  ;   ]
+  ]
   tick 
 end
 to move-to-node [cnode nnode]
@@ -117,48 +124,54 @@ to move-to-node [cnode nnode]
   ;return turtle to normal state
   ask turtle cnode
   [
-   set color red
-   set shape "circle"
-   set breed turtles
    if ispursuer? = true
    [
-     set ispursuer? false
      ask turtle nnode
      [
-       if breed = evaders
+       ifelse breed != evaders
        [
-        ;set kung evader ung next node  
+         let cnodeindex position cnode Plist
+         set Plist replace-item cnodeindex Plist nnode
        ]
-      set color yellow 
-      set shape "triangle"
-      set ispursuer? true 
-      set breed pursuers
-      let cnodeindex position cnode Plist
-      set Plist replace-item cnodeindex Plist nnode 
+       [
+         let nnodeindex position nnode Elist
+         set Elist remove-item nnodeindex Elist
+       ]
+       set color yellow 
+       set shape "triangle"
+       set ispursuer? true 
+       set breed pursuers 
      ]
    ]
    if isevader? = true
    [
-     set isevader? false
      ask turtle nnode
      [
-       if breed = pursuers
+       ifelse breed != pursuers
        [
-         set color yellow 
-         set shape "triangle"
-         set ispursuer? true 
-         set breed pursuers
-         let cnodeindex position cnode Plist
-         set Plist replace-item cnodeindex Plist nnode 
+         set color blue 
+         set shape "square"
+         set isevader? true 
+         set breed evaders
+         let cnodeindex position cnode Elist
+         set Elist replace-item cnodeindex Elist nnode
        ]
-       set color blue 
-       set shape "square"
-       set isevader? true 
-       set breed evaders
-       let cnodeindex position cnode Elist
-       set Elist replace-item cnodeindex Elist nnode
+       [
+        ; set color yellow 
+        ; set shape "triangle"
+        ; set ispursuer? true 
+        ; set breed pursuers
+         let cnodeindex position cnode Elist
+         set Elist remove-item cnodeindex Elist
+       ]
+       
      ]
-   ] 
+    ]
+   set color red
+   set shape "circle"
+   set breed turtles
+   set ispursuer? false
+   set isevader? false 
   ]
 end
 to pursuit-strategy
@@ -168,17 +181,17 @@ to pursuit-strategy
     move-to-node item 0 Plist item 0 Elist
   ]
   [
-    
+    print(word "pursuit strategy")
   ]
 end
 
 to evader-strategy
-  ask turtles
+  ask one-of evaders
   [
-    let emover [who] of one-of evaders
+    let emover who ;of one-of evaders
     let etarget [who] of one-of link-neighbors
     move-to-node emover etarget
-    print(word "hoy")
+    print(word "evader strategy")
   ]
 end
 
@@ -318,9 +331,9 @@ GRAPHICS-WINDOW
 237
 10
 728
-574
+600
 18
-20
+21
 13.0
 1
 10
@@ -333,8 +346,8 @@ GRAPHICS-WINDOW
 1
 -18
 18
--20
-20
+-21
+21
 1
 1
 1
@@ -381,7 +394,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-3
+8
 1
 0
 Number
@@ -403,7 +416,7 @@ INPUTBOX
 191
 130
 no-of-links
-2
+13
 1
 0
 Number
@@ -414,7 +427,7 @@ INPUTBOX
 192
 193
 no-of-evaders
-1
+0
 1
 0
 Number
