@@ -3,7 +3,7 @@ turtles-own [ ispursuer? isevader? idnumber]
 links-own [ weight ]
 breed [ pursuers pursuer ]
 breed [ evaders evader ]
-globals [AMatrix cost Plist Elist PEtable ]
+globals [AMatrix cost Plist Elist PEtable no-ticks]
  
 to setup
                         ;; clear everything on canvas
@@ -66,12 +66,6 @@ end
 to setup-edges
   while [ count links < no-of-links ] ;; num-links given by the user from interface
   [
-    ;ask one-of turtles 
-    ;[
-     ; let choice one-of other turtles
-
-     ; if choice != nobody [ create-link-with choice ]
-    ;]
     ask one-of turtles
     [
       let idnum 0
@@ -105,19 +99,14 @@ to go
   print(word "evaders count: " count evaders word "tick: " ticks)
   ifelse ( (count evaders = 0 ) or (ticks >= 500))
   [
-     set no-of-evaders 0 
+     ;set no-of-evaders 0 
      stop
   ]
  [
-  ;ifelse (tiktok = 0) 
-  ;   [
-       evader-strategy
-  ;   ]
-  ;   [
-      if count evaders > 0
-       [ pursuit-strategy ]
-  ;   ]
-  ]
+   evader-strategy
+   if count evaders > 0  
+   [ pursuit-strategy ]
+ ]
   tick 
 end
 to move-to-node [cnode nnode]
@@ -137,6 +126,7 @@ to move-to-node [cnode nnode]
        [
          let nnodeindex position nnode Elist
          set Elist remove-item nnodeindex Elist
+         set no-of-evaders no-of-evaders - 1
        ]
        set color yellow 
        set shape "triangle"
@@ -164,6 +154,7 @@ to move-to-node [cnode nnode]
         ; set breed pursuers
          let cnodeindex position cnode Elist
          set Elist remove-item cnodeindex Elist
+         set no-of-evaders no-of-evaders - 1
        ]
        
      ]
@@ -176,16 +167,81 @@ to move-to-node [cnode nnode]
   ]
 end
 to pursuit-strategy
-  ;move-to-node 0 1
+  let mlindex 99  ;index of minimimum path length in the list
+  let pursuerpath [] ; list of path to pursue
+  let ppathlength 0 
+  let targetnode 99
+  let oldlist []
+  let mlength 99
+  let pllist []  ;path length list
+  let spllist [] ;sorted path length list
+  let scounter 0 ;counter to search index in a sorted list
+  let pcounter 0 ;counter to search index of min in original list
   ifelse no-of-nodes = 2
   [
     move-to-node item 0 Plist item 0 Elist
   ]
   [
     print(word "pursuit strategy")   
-  ]
+    ifelse no-ticks > 0
+    [
+      set mlength min map length map last PEtable
+      show mlength
+      ifelse mlength > 0
+      [
+        set mlindex position min map length map last PEtable map length map last PEtable ;get the index of the list with min path length within PEtable
+        set pursuerpath item 1 item mlindex PEtable ;path to pursue
+        set ppathlength length pursuerpath
+        show word "path length " ppathlength
+        set targetnode item 0 pursuerpath
+        set pursuerpath remove-item 0 pursuerpath
+        set oldlist item mlindex PEtable
+        set PEtable replace-item mlindex PEtable replace-item 1 oldlist pursuerpath ;;continue to access the right index of what to be replaced
+      ]
+      [
+        set pllist map length map last PEtable
+        set spllist sort map length map last PEtable
+        
+        while [item scounter spllist = 0]
+        [
+          set scounter scounter + 1  
+        ]
+        ;hanapin ung original index ng sorted
+        while [item pcounter pllist != item scounter spllist]
+        [ set pcounter pcounter + 1]
+        set mlindex pcounter
+        show word "index of minlength: " pcounter
+        set pursuerpath item 1 item mlindex PEtable ;path to pursue
+        set ppathlength length pursuerpath
+        show word "path length " ppathlength
+        set targetnode item 0 pursuerpath
+        set pursuerpath remove-item 0 pursuerpath
+        set oldlist item mlindex PEtable
+        set PEtable replace-item mlindex PEtable replace-item 1 oldlist pursuerpath
+        
+      ]
+      
+      ;if ppathlength = 1
+      ;[
+      ; set PEtable remove-item mlindex PEtable  
+      ;]
+      show word "PEtable: " PEtable
+      show word "target node: " targetnode
+      move-to-node item mlindex Plist targetnode
+      set no-ticks no-ticks - 1
+    ]
+    [
+      nearestEtoP
+      show word "no  more ticks" no-ticks
+    ]
+    ;
+    
+    ;print(word "minlength: " minlength)      
+  ]   
+end 
+to-report replace-subitem [index1 index2 lists value] 
+  let old item index1 lists
 end
-
 to evader-strategy
   ask one-of evaders
   [
@@ -232,6 +288,7 @@ to initialize-evaders
 end
 
 to nearestEtoP
+  show word "enter nearestEtoP function " 0
   let pcounter 0
   let ecounter 0
   ;let co 999999
@@ -239,6 +296,9 @@ to nearestEtoP
   let currente 9999
   let costlist []
   let templist []
+  let minvalue 99
+  let minindex 99
+  let evader1 99
   set PEtable []
   
   while [pcounter != no-of-pursuers ]
@@ -251,19 +311,21 @@ to nearestEtoP
      set ecounter ecounter + 1 
     ]
     ;print (word "costlist of pursuer " item pcounter Plist costlist)
-    let minvalue min map first costlist
-    let minindex position minvalue map first costlist
+    set minvalue min map first costlist
+    set minindex position minvalue map first costlist
     ;print(word "min " minvalue word "min index " minindex)
     set templist item 1 item minindex costlist
     ;print(word "path " templist );
     ;print(word "evader" item minindex Elist)
-    let evader1 item minindex Elist
+    set evader1 item minindex Elist
     set PEtable lput (list evader1 templist) PEtable
     set pcounter pcounter + 1
     set ecounter 0
     set costlist []
   ]
   print(word "pursuit evader table " PEtable );
+  set no-ticks sum map length map last PEtable
+  show word "ticks " no-ticks
 end
 
 to-report dijkstra [source target]
@@ -325,6 +387,7 @@ to-report dijkstra [source target]
   
   ;print (word "path " path)
   ;print (word "cost to target: " item target distlist)
+  set path remove-item 0 path
   report (list item target distlist path)  
 end
 @#$#@#$#@
@@ -395,7 +458,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-3
+100
 1
 0
 Number
@@ -406,7 +469,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-1
+3
 1
 0
 Number
@@ -417,7 +480,7 @@ INPUTBOX
 191
 130
 no-of-links
-2
+200
 1
 0
 Number
@@ -428,7 +491,7 @@ INPUTBOX
 192
 193
 no-of-evaders
-0
+1
 1
 0
 Number
