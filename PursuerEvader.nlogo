@@ -14,15 +14,17 @@ to setup
        set cost matrix:make-constant no-of-nodes no-of-nodes 999
        set Plist []
        set Elist []
+       set PEtable []
+       set no-ticks 0
        setup-nodes                     ;; a procedure to set nodes
        setup-edges                     ;; a procedure to set edges
        ask turtles [ set color red]    ;; paint nodes red
        ask links [set color white]     ;; paint edges white
        initialize-pursuers
        initialize-evaders 
+       printAMatrix
        printPlist
        printElist
-       printAMatrix
        nearestEtoP               ;a function to compute the nearest evader to every pursuer
        reset-ticks
   ]
@@ -116,16 +118,6 @@ to go
   tick 
 end
 
-to-report find-dup [ c ] 
-  if length c <= 1 [report false]
-  let a first c
-  let b butfirst c
-  foreach b [
-   if (a = ?) [report true] 
-  ]
-  report find-dup but-first b
-end
-
 to move-to-node [cnode nnode index]
   print(word "source:" cnode word"  target:" nnode word "  index:" index)
   let cnodeindex 999
@@ -133,7 +125,7 @@ to move-to-node [cnode nnode index]
   ask turtle cnode
   [
     
-   if ispursuer? = true
+   ifelse ispursuer? = true
    [
      ifelse dupli cnode Plist = false
      [ ;return turtle to normal state
@@ -180,8 +172,7 @@ to move-to-node [cnode nnode index]
        set ispursuer? true 
        set breed pursuers 
      ]
-   ]
-   if isevader? = true
+   ];  if isevader? = true ;if current node is evader
    [
      ifelse dupli cnode Elist = false
      [
@@ -338,7 +329,7 @@ to initialize-evaders
     ]
     set Elist remove-duplicates Elist
 end
-
+ 
 to nearestEtoP
   show word "enter nearestEtoP function " 0
   let pcounter 0
@@ -381,8 +372,8 @@ to nearestEtoP
 end
 
 to-report dijkstra [source target]
-  ;print(word "pursuer: " source)
-  ;print(word "evader: " target)
+  print(word "pursuer: " source)
+  print(word "evader: " target)
   let distlist []
   let selected []
   let prev []
@@ -395,8 +386,7 @@ to-report dijkstra [source target]
   let j 0
   ;initialization of lists
   while [i != no-of-nodes]
-  [
-     
+  [  
    set distlist lput 9999 distlist
    set prev lput -1 prev 
    set selected lput 0 selected
@@ -510,7 +500,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-1
+100
 1
 0
 Number
@@ -521,7 +511,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-0
+10
 1
 0
 Number
@@ -532,7 +522,7 @@ INPUTBOX
 191
 130
 no-of-links
-1
+200
 1
 0
 Number
@@ -543,7 +533,7 @@ INPUTBOX
 192
 193
 no-of-evaders
-1
+0
 1
 0
 Number
