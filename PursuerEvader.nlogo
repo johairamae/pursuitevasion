@@ -7,7 +7,7 @@ globals [AMatrix cost Plist Elist PEtable no-ticks]
  
 to setup
                         ;; clear everything on canvas
-  ifelse ( (no-of-nodes > 0) and (no-of-nodes >= (no-of-pursuers + no-of-evaders)) and (no-of-evaders > 0) ) 
+  ifelse ( (no-of-nodes > 0) and (no-of-nodes >= (no-of-pursuers + no-of-evaders)) and (no-of-evaders > 0) and (no-of-pursuers > 0)) 
    [
        clear-all 
        set AMatrix matrix:make-constant no-of-nodes no-of-nodes 0
@@ -32,7 +32,13 @@ to setup
      user-message ("no evaders to pursue") 
     ]
     [
-     user-message ("not enough nodes for pursuers and evaders")
+      ifelse no-of-pursuers = 0
+      [
+        user-message ("no pursuers to capture evaders")
+      ]
+      [
+        user-message ("not enough nodes for pursuers and evaders")
+      ]
     ]
   ]
  
@@ -43,11 +49,11 @@ to printAMatrix
 end
 
 to printPlist
-  print (Plist)
+  print (word "Pursuer list: " Plist)
 end
 
 to printElist
-  print (Elist)
+  print (word "Evader list: " Elist)
 end
 
 to setup-nodes
@@ -102,31 +108,72 @@ to go
      ;set no-of-evaders 0 
      stop
   ]
- [
-   evader-strategy
-   if count evaders > 0  
-   [ pursuit-strategy ]
- ]
+  [
+    evader-strategy
+    if count evaders > 0  
+    [ pursuit-strategy ]
+  ]
   tick 
 end
-to move-to-node [cnode nnode]
-  print(word "source" cnode word"target " nnode)
-  ;return turtle to normal state
+
+to-report find-dup [ c ] 
+  if length c <= 1 [report false]
+  let a first c
+  let b butfirst c
+  foreach b [
+   if (a = ?) [report true] 
+  ]
+  report find-dup but-first b
+end
+
+to move-to-node [cnode nnode index]
+  print(word "source:" cnode word"  target:" nnode word "  index:" index)
+  let cnodeindex 999
+  let nnodeindex 999
   ask turtle cnode
   [
+    
    if ispursuer? = true
    [
+     ifelse dupli cnode Plist = false
+     [ ;return turtle to normal state
+       set color red
+       set shape "circle"
+       set breed turtles
+       set ispursuer? false
+       set isevader? false
+     ]
+     [
+       set color yellow 
+       set shape "triangle"
+       set ispursuer? true 
+       set breed pursuers 
+     ]
+     
      ask turtle nnode
      [
        ifelse breed != evaders
-       [
-         let cnodeindex position cnode Plist
-         set Plist replace-item cnodeindex Plist nnode
+       [ 
+         set Plist replace-item index Plist nnode
        ]
        [
-         let nnodeindex position nnode Elist
-         set Elist remove-item nnodeindex Elist
-         set no-of-evaders no-of-evaders - 1
+         let ecount dupli nnode Elist
+         ifelse ecount = false
+         [
+           set nnodeindex position nnode Elist
+           set Elist remove-item nnodeindex Elist
+           set no-of-evaders no-of-evaders - 1
+         ]
+         [
+           while [ecount != 0]
+           [
+             set nnodeindex position nnode Elist
+             set Elist remove-item nnodeindex Elist
+             set no-of-evaders no-of-evaders - 1
+             set ecount ecount - 1
+           ]
+         ]
+         set Plist replace-item index Plist nnode
        ]
        set color yellow 
        set shape "triangle"
@@ -136,6 +183,20 @@ to move-to-node [cnode nnode]
    ]
    if isevader? = true
    [
+     ifelse dupli cnode Elist = false
+     [
+       set color red
+       set shape "circle"
+       set breed turtles
+       set ispursuer? false
+       set isevader? false
+     ]
+     [
+       set color blue 
+       set shape "square"
+       set isevader? true 
+       set breed evaders 
+     ]
      ask turtle nnode
      [
        ifelse breed != pursuers
@@ -144,28 +205,25 @@ to move-to-node [cnode nnode]
          set shape "square"
          set isevader? true 
          set breed evaders
-         let cnodeindex position cnode Elist
-         set Elist replace-item cnodeindex Elist nnode
+         set Elist replace-item index Elist nnode
        ]
        [
-        ; set color yellow 
-        ; set shape "triangle"
-        ; set ispursuer? true 
-        ; set breed pursuers
-         let cnodeindex position cnode Elist
-         set Elist remove-item cnodeindex Elist
+         set Elist remove-item index Elist
          set no-of-evaders no-of-evaders - 1
        ]
        
      ]
     ]
-   set color red
-   set shape "circle"
-   set breed turtles
-   set ispursuer? false
-   set isevader? false 
+     
   ]
 end
+
+to-report dupli [ c pelist]
+  let duplist filter [ ? = c] pelist
+  ifelse length duplist >= 2 [report length duplist]
+  [report false]
+end
+
 to pursuit-strategy
   let mlindex 99  ;index of minimimum path length in the list
   let pursuerpath [] ; list of path to pursue
@@ -177,22 +235,22 @@ to pursuit-strategy
   let spllist [] ;sorted path length list
   let scounter 0 ;counter to search index in a sorted list
   let pcounter 0 ;counter to search index of min in original list
+  
   ifelse no-of-nodes = 2
   [
-    move-to-node item 0 Plist item 0 Elist
+    printPlist
+    move-to-node item 0 Plist item 0 Elist 0
   ]
   [
     print(word "pursuit strategy")   
     ifelse no-ticks > 0
     [
       set mlength min map length map last PEtable
-      show mlength
       ifelse mlength > 0
       [
         set mlindex position min map length map last PEtable map length map last PEtable ;get the index of the list with min path length within PEtable
         set pursuerpath item 1 item mlindex PEtable ;path to pursue
         set ppathlength length pursuerpath
-        show word "path length " ppathlength
         set targetnode item 0 pursuerpath
         set pursuerpath remove-item 0 pursuerpath
         set oldlist item mlindex PEtable
@@ -210,45 +268,39 @@ to pursuit-strategy
         while [item pcounter pllist != item scounter spllist]
         [ set pcounter pcounter + 1]
         set mlindex pcounter
-        show word "index of minlength: " pcounter
         set pursuerpath item 1 item mlindex PEtable ;path to pursue
         set ppathlength length pursuerpath
-        show word "path length " ppathlength
         set targetnode item 0 pursuerpath
         set pursuerpath remove-item 0 pursuerpath
         set oldlist item mlindex PEtable
         set PEtable replace-item mlindex PEtable replace-item 1 oldlist pursuerpath
-        
       ]
       
-      ;if ppathlength = 1
-      ;[
-      ; set PEtable remove-item mlindex PEtable  
-      ;]
       show word "PEtable: " PEtable
       show word "target node: " targetnode
-      move-to-node item mlindex Plist targetnode
+      printPlist
+      move-to-node item mlindex Plist targetnode mlindex
       set no-ticks no-ticks - 1
     ]
     [
       nearestEtoP
       show word "no  more ticks" no-ticks
-    ]
-    ;
-    
-    ;print(word "minlength: " minlength)      
-  ]   
+    ]   
+  ]
+  printPlist
 end 
-to-report replace-subitem [index1 index2 lists value] 
-  let old item index1 lists
-end
+
 to evader-strategy
+ ; let index 999
   ask one-of evaders
   [
     let emover who ;of one-of evaders
     let etarget [who] of one-of link-neighbors
-    move-to-node emover etarget
+    let index position emover Elist
+    printElist
+    move-to-node emover etarget index
     print(word "evader strategy")
+    printElist
   ]
 end
 
@@ -329,8 +381,8 @@ to nearestEtoP
 end
 
 to-report dijkstra [source target]
-  print(word "pursuer: " source)
-  print(word "evader: " target)
+  ;print(word "pursuer: " source)
+  ;print(word "evader: " target)
   let distlist []
   let selected []
   let prev []
@@ -458,7 +510,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-100
+1
 1
 0
 Number
@@ -469,7 +521,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-3
+0
 1
 0
 Number
@@ -480,7 +532,7 @@ INPUTBOX
 191
 130
 no-of-links
-200
+1
 1
 0
 Number
