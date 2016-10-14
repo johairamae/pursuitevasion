@@ -10,7 +10,7 @@ to setup
   ifelse ( (no-of-nodes > 0) and (no-of-nodes >= (no-of-pursuers + no-of-evaders)) and (no-of-evaders > 0) and (no-of-pursuers > 0)) 
    [
        clear-all 
-       set AMatrix matrix:make-constant no-of-nodes no-of-nodes 0
+      ; set AMatrix matrix:make-constant no-of-nodes no-of-nodes 0
        set cost matrix:make-constant no-of-nodes no-of-nodes 999
        set Plist []
        set Elist []
@@ -42,12 +42,12 @@ to setup
         user-message ("not enough nodes for pursuers and evaders")
       ]
     ]
-  ]
+  ]  
  
 end
 
 to printAMatrix
- print matrix:pretty-print-text cost
+ print matrix:pretty-print-text cost 
 end
 
 to printPlist
@@ -86,8 +86,8 @@ to setup-edges
          ask links[
            set cidnum [who] of end1
            set idnum [who] of end2
-           matrix:set AMatrix idnum cidnum 1
-           matrix:set AMatrix cidnum idnum 1
+           ;matrix:set AMatrix idnum cidnum 1
+          ; matrix:set AMatrix cidnum idnum 1
            matrix:set cost idnum cidnum 1
            matrix:set cost cidnum idnum 1
          ]
@@ -165,6 +165,8 @@ to move-to-node [cnode nnode index]
              set ecount ecount - 1
            ]
          ]
+         ;insert code here where it terminates the pursuit plans of pursuers to captured evaders
+         terminate-pursuit nnode
          set Plist replace-item index Plist nnode
        ]
        set color yellow 
@@ -201,6 +203,8 @@ to move-to-node [cnode nnode index]
        [
          set Elist remove-item index Elist
          set no-of-evaders no-of-evaders - 1
+         terminate-pursuit cnode
+         ;insert code here where it terminates the pursuit plans of pursuers to captured evaders
        ]
        
      ]
@@ -213,6 +217,22 @@ to-report dupli [ c pelist]
   let duplist filter [ ? = c] pelist
   ifelse length duplist >= 2 [report length duplist]
   [report false]
+end
+
+to terminate-pursuit [evader1]
+  ;show word "terminate pursuit of evader: " evader1
+  ;show word "Before PEtable:"PEtable
+  let oldepath []
+  let bilang 0
+  foreach PEtable [
+    if first ? = evader1
+    [
+       set oldepath ?
+       set PEtable replace-item bilang PEtable replace-item 1 oldepath []
+    ]
+    set bilang bilang + 1
+  ]
+  ;show word "After PEtable: " PEtable
 end
 
 to pursuit-strategy
@@ -500,7 +520,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-100
+8
 1
 0
 Number
@@ -511,7 +531,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-10
+3
 1
 0
 Number
@@ -522,7 +542,7 @@ INPUTBOX
 191
 130
 no-of-links
-200
+14
 1
 0
 Number
