@@ -5,7 +5,7 @@ breed [ pursuers pursuer ]
 breed [ evaders evader ]
 globals [AMatrix cost Plist Elist PEtable no-ticks]
  
-to setup
+to setup 
                         ;; clear everything on canvas
   ifelse ( (no-of-nodes > 0) and (no-of-nodes >= (no-of-pursuers + no-of-evaders)) and (no-of-evaders > 0) and (no-of-pursuers > 0)) 
    [
@@ -209,11 +209,11 @@ to move-to-node [cnode nnode index]
        
      ]
     ]
-     
+      
   ]
 end
-
-to-report dupli [ c pelist]
+ 
+to-report dupli [ c pelist] 
   let duplist filter [ ? = c] pelist
   ifelse length duplist >= 2 [report length duplist]
   [report false]
@@ -224,11 +224,14 @@ to terminate-pursuit [evader1]
   ;show word "Before PEtable:"PEtable
   let oldepath []
   let bilang 0
+  let remticks 0
   foreach PEtable [
     if first ? = evader1
     [
-       set oldepath ?
-       set PEtable replace-item bilang PEtable replace-item 1 oldepath []
+        set oldepath ?
+        set remticks length last oldepath
+        set no-ticks no-ticks - remticks
+        set PEtable replace-item bilang PEtable replace-item 1 oldepath []
     ]
     set bilang bilang + 1
   ]
@@ -520,7 +523,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-8
+128
 1
 0
 Number
@@ -542,7 +545,7 @@ INPUTBOX
 191
 130
 no-of-links
-14
+200
 1
 0
 Number
