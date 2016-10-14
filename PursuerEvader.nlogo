@@ -72,33 +72,41 @@ end
 
 
 to setup-edges
-  while [ count links < no-of-links ] ;; num-links given by the user from interface
+  let maxedges (no-of-nodes * (no-of-nodes - 1)) / 2
+  show word "max number of edges: " maxedges
+  ifelse no-of-links <= maxedges
   [
-    ask one-of turtles
+    while [ count links < no-of-links ] ;; num-links given by the user from interface
     [
-      let idnum 0
-      let cidnum 0
-      let choice (min-one-of (other turtles with [not link-neighbor? myself])
-                   [distance myself])
-      if choice != nobody [
-         create-link-with choice       
-         ;print (word "link count: " count links )
-         ask links[
-           set cidnum [who] of end1
-           set idnum [who] of end2
-           ;matrix:set AMatrix idnum cidnum 1
-          ; matrix:set AMatrix cidnum idnum 1
-           matrix:set cost idnum cidnum 1
-           matrix:set cost cidnum idnum 1
-         ]
+      ask one-of turtles
+      [
+        let idnum 0
+        let cidnum 0
+        let choice (min-one-of (other turtles with [not link-neighbor? myself])
+          [distance myself])
+        if choice != nobody [
+          create-link-with choice       
+          ;print (word "link count: " count links )
+          ask links[
+            set cidnum [who] of end1
+            set idnum [who] of end2
+            ;matrix:set AMatrix idnum cidnum 1
+            ; matrix:set AMatrix cidnum idnum 1
+            matrix:set cost idnum cidnum 1
+            matrix:set cost cidnum idnum 1
+          ]
+        ]
       ]
     ]
-  ]
     ; make the network look a little prettier
     repeat 10
     [
       layout-spring turtles links 0.3 (world-width / (sqrt no-of-nodes)) 1
     ]
+  ]
+  [
+    user-message ("no of edges is more than max no of edges allowed")
+  ]
 end
 
 to go 
@@ -523,7 +531,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-128
+256
 1
 0
 Number
@@ -534,7 +542,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-3
+10
 1
 0
 Number
@@ -545,7 +553,7 @@ INPUTBOX
 191
 130
 no-of-links
-200
+500
 1
 0
 Number
@@ -556,7 +564,7 @@ INPUTBOX
 192
 193
 no-of-evaders
-0
+10
 1
 0
 Number
