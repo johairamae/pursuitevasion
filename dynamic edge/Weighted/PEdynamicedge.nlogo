@@ -27,6 +27,7 @@ to setup
        printElist
        nearestEtoP               ;a function to compute the nearest evader to every pursuer
        reset-ticks
+       ;reset-timer
   ]
   [
     ifelse no-of-evaders = 0
@@ -70,7 +71,7 @@ to setup-nodes
   ]
 end
 
-
+   
 to setup-edges
   let maxedges (no-of-nodes * (no-of-nodes - 1)) / 2
   show word "max number of edges: " maxedges
@@ -91,7 +92,7 @@ to setup-edges
             set cidnum [who] of end1
             set idnum [who] of end2
             ;matrix:set AMatrix idnum cidnum 1
-            ; matrix:set AMatrix cidnum idnum 1
+            ;matrix:set AMatrix cidnum idnum 1
             matrix:set cost idnum cidnum 1
             matrix:set cost cidnum idnum 1
           ]
@@ -112,10 +113,13 @@ end
 to go 
   let tiktok ticks
   set tiktok ticks mod 2
+  reset-timer
   print(word "evaders count: " count evaders word "tick: " ticks)
   ifelse ( (count evaders = 0 ) or (ticks >= 500))
   [
      ;set no-of-evaders 0 
+     
+     print (word "elapsed time: " timer)
      stop
   ]
   [
@@ -301,6 +305,12 @@ to pursuit-strategy
       show word "target node: " targetnode
       printPlist
       move-to-node item mlindex Plist targetnode mlindex
+     ; if no-ticks mod 2 = 0
+     ; [
+     ;   let ran random 2
+     ;   ifelse ran = 0 [ insert_edge ]
+     ;   [ del_edge ] 
+     ; ]
       set no-ticks no-ticks - 1
     ]
     [
@@ -312,7 +322,6 @@ to pursuit-strategy
 end 
 
 to evader-strategy
- ; let index 999
   ask one-of evaders
   [
     let emover who ;of one-of evaders
@@ -462,6 +471,72 @@ to-report dijkstra [source target]
   set path remove-item 0 path
   report (list item target distlist path)  
 end
+
+to insert_edge 
+  ;check if source exists
+  ;check if destination exists
+  let insedge 0
+  while [insedge = 0]
+  [
+  ask one-of turtles
+      [
+        let idnum 0
+        let cidnum 0
+        let choice (min-one-of (other turtles with [not link-neighbor? myself])
+          [distance myself])
+        if choice != nobody [
+          create-link-with choice       
+          ask links[
+            set cidnum [who] of end1
+            set idnum [who] of end2
+            matrix:set cost idnum cidnum 1
+            matrix:set cost cidnum idnum 1
+          ]
+          set no-of-links no-of-links + 1 
+          print (word "LINK INSERTED:"  )
+          set insedge insedge + 1
+         ; update_pursuit_list cidnum idnum
+          
+        ]
+        repeat 10
+        [
+          layout-spring turtles links 0.3 (world-width / (sqrt no-of-nodes)) 1
+        ]
+      ] 
+  ]
+end
+
+to del_edge 
+  ask one-of links [
+    let source [who] of end1
+    let target [who] of end2
+    matrix:set cost source target 999
+    matrix:set cost target source 999
+    print (word "REMOVE A LINK")
+    set no-of-links no-of-links - 1
+    ;update_pursuit_list source target
+    die
+   ] 
+end
+
+to update_pursuit_list [node1 node2]   ;update the pursuit plan of pursuers affected
+  show word "update pursuit of evader: " node1
+  show word "Before PEtable:" PEtable
+  let oldepath []
+  let bilang 0
+  let remticks 0
+  foreach PEtable [
+    if first ? = node1
+    [
+        set oldepath ?
+        set remticks length last oldepath
+        set no-ticks no-ticks - remticks
+        set PEtable replace-item bilang PEtable replace-item 1 oldepath []
+    ]
+    set bilang bilang + 1
+  ]
+  ;show word "After PEtable: " PEtable
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 237
@@ -541,7 +616,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-10
+2
 1
 0
 Number

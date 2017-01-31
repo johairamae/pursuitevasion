@@ -3,7 +3,7 @@ turtles-own [ ispursuer? isevader? idnumber]
 links-own [ weight ]
 breed [ pursuers pursuer ]
 breed [ evaders evader ] 
-globals [AMatrix cost Plist Elist PEtable no-ticks]
+globals [AMatrix cost Plist Elist PEtable no-ticks no-sec]
  
 to setup 
                         ;; clear everything on canvas
@@ -16,6 +16,7 @@ to setup
        set Elist []
        set PEtable []
        set no-ticks 0
+       set no-sec 0
        setup-nodes                     ;; a procedure to set nodes
        setup-edges                     ;; a procedure to set edges
        ask turtles [ set color red]    ;; paint nodes red
@@ -70,7 +71,7 @@ to setup-nodes
   ]
 end
 
-
+   
 to setup-edges
   let maxedges (no-of-nodes * (no-of-nodes - 1)) / 2
   show word "max number of edges: " maxedges
@@ -90,8 +91,6 @@ to setup-edges
           ask links[
             set cidnum [who] of end1
             set idnum [who] of end2
-            ;matrix:set AMatrix idnum cidnum 1
-            ; matrix:set AMatrix cidnum idnum 1
             matrix:set cost idnum cidnum 1
             matrix:set cost cidnum idnum 1
           ]
@@ -115,13 +114,23 @@ to go
   print(word "evaders count: " count evaders word "tick: " ticks)
   ifelse ( (count evaders = 0 ) or (ticks >= 500))
   [
-     ;set no-of-evaders 0 
+     print (word "elapsed time: " no-sec)
      stop
   ]
   [
+    reset-timer
     evader-strategy
     if count evaders > 0  
     [ pursuit-strategy ]
+    if tiktok = 0
+     ;[
+       ;let ran random 2
+       ;ifelse ran = 0 [ insert_edge ]
+       [ del_edge ] 
+     ;]
+    set no-sec no-sec + timer
+    
+    print (word "elapsed time: " no-sec)
   ]
   tick 
 end
@@ -297,8 +306,8 @@ to pursuit-strategy
         set PEtable replace-item mlindex PEtable replace-item 1 oldlist pursuerpath
       ]
       
-      show word "PEtable: " PEtable
-      show word "target node: " targetnode
+    ;  show word "PEtable: " PEtable
+    ;  show word "target node: " targetnode
       printPlist
       move-to-node item mlindex Plist targetnode mlindex
       set no-ticks no-ticks - 1
@@ -312,7 +321,6 @@ to pursuit-strategy
 end 
 
 to evader-strategy
- ; let index 999
   ask one-of evaders
   [
     let emover who ;of one-of evaders
@@ -402,8 +410,8 @@ to nearestEtoP
 end
 
 to-report dijkstra [source target]
-  print(word "pursuer: " source)
-  print(word "evader: " target)
+  ;print(word "pursuer: " source)
+  ;print(word "evader: " target)
   let distlist []
   let selected []
   let prev []
@@ -461,6 +469,73 @@ to-report dijkstra [source target]
   ;print (word "cost to target: " item target distlist)
   set path remove-item 0 path
   report (list item target distlist path)  
+end
+
+to insert_edge 
+  ;check if source exists
+  ;check if destination exists
+  let insedge 0
+  while [insedge = 0]
+  [
+  ask one-of turtles
+      [
+        let idnum 0
+        let cidnum 0
+        let choice (min-one-of (other turtles with [not link-neighbor? myself])
+          [distance myself])
+        if choice != nobody [
+          create-link-with choice       
+          ask links[
+            set cidnum [who] of end1
+            set idnum [who] of end2
+            matrix:set cost idnum cidnum 1
+            matrix:set cost cidnum idnum 1
+          ]
+          set no-of-links no-of-links + 1 
+          print (word "LINK INSERTED:"  )
+          set insedge insedge + 1
+         ; update_pursuit_list cidnum idnum
+          
+        ]
+        repeat 10
+        [
+          layout-spring turtles links 0.3 (world-width / (sqrt no-of-nodes)) 1
+        ]
+      ] 
+  ]
+end
+
+to del_edge 
+  ask one-of links [
+    let source [who] of end1
+    let target [who] of end2
+    matrix:set cost source target 999
+    matrix:set cost target source 999
+    print (word "REMOVE A LINK")
+    set no-of-links no-of-links - 1
+    update_pursuit_list source target
+    die
+   ] 
+end
+
+to update_pursuit_list [node1 node2]   ;update the pursuit plan of pursuers affected
+  print(word "update path with link: " node1 word " " node2)
+  show word "Before PEtable:" PEtable
+  let oldepath []
+  let bilang 0
+  let remticks 0
+  foreach PEtable [
+    if (member? node1 item 1 ?) and (member? node2 item 1 ?)
+    [
+      print( word "MAGDEDELETE NG PATH!!!!")
+        set oldepath ?
+        set remticks length last oldepath
+        set no-ticks no-ticks - remticks
+        set PEtable replace-item bilang PEtable replace-item 1 oldepath []
+    ]
+    set bilang bilang + 1
+  ]
+  show word "After PEtable: " PEtable
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -530,7 +605,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-32
+50
 1
 0
 Number
@@ -541,7 +616,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-10
+3
 1
 0
 Number
@@ -552,7 +627,7 @@ INPUTBOX
 191
 130
 no-of-links
-70
+82
 1
 0
 Number

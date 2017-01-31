@@ -248,7 +248,7 @@ end
 to pursuit-strategy
   let mlindex 99  ;index of minimimum path length in the list
   let pursuerpath [] ; list of path to pursue
-  let ppathlength 0 
+  let ppathlength 0   
   let targetnode 99
   let oldlist []
   let mlength 99
@@ -370,20 +370,21 @@ to nearestEtoP
   let costlist []
   let templist []
   let minvalue 99
-  let minindex 99
+  let minindex 990
   let evader1 99
   set PEtable []
   
   while [pcounter != no-of-pursuers ]
   [
     set currentp item pcounter Plist
-    while [ecounter != no-of-evaders ]
+    while [ecounter != no-of-evaders ] ;compute distance of all evaders to current pursuer
     [
+      ;dito ko dapat isisingit ung branch and bound, dapat may variable to store current min steps then sa dijkstra algo dapat may counter ng steps
      set currente item ecounter Elist
-     set costlist lput dijkstra currentp currente costlist
+     set costlist lput dijkstra currentp currente costlist ;stores all paths to all evaders
      set ecounter ecounter + 1 
     ]
-    ;print (word "costlist of pursuer " item pcounter Plist costlist)
+    print (word "costlist of pursuer " item pcounter Plist costlist)
     set minvalue min map first costlist
     set minindex position minvalue map first costlist
     ;print(word "min " minvalue word "min index " minindex)
@@ -530,7 +531,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-32
+15
 1
 0
 Number
@@ -541,7 +542,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-10
+2
 1
 0
 Number
@@ -552,7 +553,7 @@ INPUTBOX
 191
 130
 no-of-links
-70
+45
 1
 0
 Number
@@ -563,7 +564,7 @@ INPUTBOX
 192
 193
 no-of-evaders
-0
+3
 1
 0
 Number
