@@ -1,15 +1,15 @@
-extensions [matrix array table]
+extensions [matrix array table nw]
 turtles-own [ ispursuer? isevader? idnumber]
 links-own [ weight ]
 breed [ pursuers pursuer ]
-breed [ evaders evader ] 
+breed [ evaders evader ]
 globals [AMatrix cost Plist Elist PEtable no-ticks no-sec]
- 
-to setup 
+
+to setup
                         ;; clear everything on canvas
-  ifelse ( (no-of-nodes > 0) and (no-of-nodes >= (no-of-pursuers + no-of-evaders)) and (no-of-evaders > 0) and (no-of-pursuers > 0)) 
+  ifelse ( (no-of-nodes > 0) and (no-of-nodes >= (no-of-pursuers + no-of-evaders)) and (no-of-evaders > 0) and (no-of-pursuers > 0))
    [
-       clear-all 
+       clear-all
       ; set AMatrix matrix:make-constant no-of-nodes no-of-nodes 0
        set cost matrix:make-constant no-of-nodes no-of-nodes 999
        set Plist []
@@ -22,7 +22,7 @@ to setup
        ask turtles [ set color red]    ;; paint nodes red
        ask links [set color white]     ;; paint edges white
        initialize-pursuers
-       initialize-evaders 
+       initialize-evaders
        printAMatrix
        printPlist
        printElist
@@ -32,7 +32,7 @@ to setup
   [
     ifelse no-of-evaders = 0
     [
-     user-message ("no evaders to pursue") 
+     user-message ("no evaders to pursue")
     ]
     [
       ifelse no-of-pursuers = 0
@@ -43,12 +43,12 @@ to setup
         user-message ("not enough nodes for pursuers and evaders")
       ]
     ]
-  ]  
- 
+  ]
+
 end
 
 to printAMatrix
- print matrix:pretty-print-text cost 
+ print matrix:pretty-print-text cost
 end
 
 to printPlist
@@ -71,7 +71,7 @@ to setup-nodes
   ]
 end
 
-   
+
 to setup-edges
   let maxedges (no-of-nodes * (no-of-nodes - 1)) / 2
   show word "max number of edges: " maxedges
@@ -86,7 +86,7 @@ to setup-edges
         let choice (min-one-of (other turtles with [not link-neighbor? myself])
           [distance myself])
         if choice != nobody [
-          create-link-with choice       
+          create-link-with choice
           ;print (word "link count: " count links )
           ask links[
             set cidnum [who] of end1
@@ -108,7 +108,7 @@ to setup-edges
   ]
 end
 
-to go 
+to go
   let tiktok ticks
   set tiktok ticks mod 2
   print(word "evaders count: " count evaders word "tick: " ticks)
@@ -120,19 +120,19 @@ to go
   [
     reset-timer
     evader-strategy
-    if count evaders > 0  
+    if count evaders > 0
     [ pursuit-strategy ]
     if tiktok = 0
      ;[
        ;let ran random 2
        ;ifelse ran = 0 [ insert_edge ]
-       [ del_edge ] 
+       [ del_edge ]
      ;]
     set no-sec no-sec + timer
-    
+
     print (word "elapsed time: " no-sec)
   ]
-  tick 
+  tick
 end
 
 to move-to-node [cnode nnode index]
@@ -141,7 +141,7 @@ to move-to-node [cnode nnode index]
   let nnodeindex 999
   ask turtle cnode
   [
-    
+
    ifelse ispursuer? = true
    [
      ifelse dupli cnode Plist = false
@@ -153,16 +153,16 @@ to move-to-node [cnode nnode index]
        set isevader? false
      ]
      [
-       set color yellow 
+       set color yellow
        set shape "triangle"
-       set ispursuer? true 
-       set breed pursuers 
+       set ispursuer? true
+       set breed pursuers
      ]
-     
+
      ask turtle nnode
      [
        ifelse breed != evaders
-       [ 
+       [
          set Plist replace-item index Plist nnode
        ]
        [
@@ -185,10 +185,10 @@ to move-to-node [cnode nnode index]
          terminate-pursuit nnode
          set Plist replace-item index Plist nnode
        ]
-       set color yellow 
+       set color yellow
        set shape "triangle"
-       set ispursuer? true 
-       set breed pursuers 
+       set ispursuer? true
+       set breed pursuers
      ]
    ];  if isevader? = true ;if current node is evader
    [
@@ -197,22 +197,22 @@ to move-to-node [cnode nnode index]
        set color red
        set shape "circle"
        set breed turtles
-       set ispursuer? false 
+       set ispursuer? false
        set isevader? false
      ]
      [
-       set color blue    
+       set color blue
        set shape "square"
-       set isevader? true    
-       set breed evaders 
+       set isevader? true
+       set breed evaders
      ]
      ask turtle nnode
      [
        ifelse breed != pursuers
        [
-         set color blue 
+         set color blue
          set shape "square"
-         set isevader? true 
+         set isevader? true
          set breed evaders
          set Elist replace-item index Elist nnode
        ]
@@ -222,14 +222,14 @@ to move-to-node [cnode nnode index]
          terminate-pursuit cnode
          ;insert code here where it terminates the pursuit plans of pursuers to captured evaders
        ]
-       
+
      ]
     ]
-      
+
   ]
 end
- 
-to-report dupli [ c pelist] 
+
+to-report dupli [ c pelist]
   let duplist filter [ ? = c] pelist
   ifelse length duplist >= 2 [report length duplist]
   [report false]
@@ -257,7 +257,7 @@ end
 to pursuit-strategy
   let mlindex 99  ;index of minimimum path length in the list
   let pursuerpath [] ; list of path to pursue
-  let ppathlength 0 
+  let ppathlength 0
   let targetnode 99
   let oldlist []
   let mlength 99
@@ -265,14 +265,14 @@ to pursuit-strategy
   let spllist [] ;sorted path length list
   let scounter 0 ;counter to search index in a sorted list
   let pcounter 0 ;counter to search index of min in original list
-  
+
   ifelse no-of-nodes = 2
   [
     printPlist
     move-to-node item 0 Plist item 0 Elist 0
   ]
   [
-    print(word "pursuit strategy")   
+    print(word "pursuit strategy")
     ifelse no-ticks > 0
     [
       set mlength min map length map last PEtable
@@ -289,10 +289,10 @@ to pursuit-strategy
       [
         set pllist map length map last PEtable
         set spllist sort map length map last PEtable
-        
+
         while [item scounter spllist = 0]
         [
-          set scounter scounter + 1  
+          set scounter scounter + 1
         ]
         ;hanapin ung original index ng sorted
         while [item pcounter pllist != item scounter spllist]
@@ -305,7 +305,7 @@ to pursuit-strategy
         set oldlist item mlindex PEtable
         set PEtable replace-item mlindex PEtable replace-item 1 oldlist pursuerpath
       ]
-      
+
     ;  show word "PEtable: " PEtable
     ;  show word "target node: " targetnode
       printPlist
@@ -315,10 +315,10 @@ to pursuit-strategy
     [
       nearestEtoP
       show word "no  more ticks" no-ticks
-    ]   
+    ]
   ]
   printPlist
-end 
+end
 
 to evader-strategy
   ask one-of evaders
@@ -336,14 +336,14 @@ end
 to initialize-pursuers
   set-default-shape pursuers "triangle"
   while [ count pursuers != no-of-pursuers] ;; num of pursuers given by the user from interface
-    [ 
-      ask one-of turtles 
+    [
+      ask one-of turtles
       [
-        set color yellow 
-        set ispursuer? true 
+        set color yellow
+        set ispursuer? true
         set breed pursuers
         set Plist lput who Plist
-      ] 
+      ]
     ]
   set Plist remove-duplicates Plist
 end
@@ -352,22 +352,22 @@ to initialize-evaders
   set-default-shape evaders "square"
   while [ count evaders != no-of-evaders]  ;; num of evaders given by the user from interface
     [
-      ask one-of turtles 
+      ask one-of turtles
       [
         let choice one-of other turtles
 
-        if ispursuer? != true 
-        [         
+        if ispursuer? != true
+        [
           set color blue
           set breed evaders
           set isevader? true
           set Elist lput who Elist
         ]
-      ] 
+      ]
     ]
     set Elist remove-duplicates Elist
 end
- 
+
 to nearestEtoP
   show word "enter nearestEtoP function " 0
   let pcounter 0
@@ -381,7 +381,7 @@ to nearestEtoP
   let minindex 99
   let evader1 99
   set PEtable []
-  
+
   while [pcounter != no-of-pursuers ]
   [
     set currentp item pcounter Plist
@@ -389,7 +389,7 @@ to nearestEtoP
     [
      set currente item ecounter Elist
      set costlist lput dijkstra currentp currente costlist
-     set ecounter ecounter + 1 
+     set ecounter ecounter + 1
     ]
     ;print (word "costlist of pursuer " item pcounter Plist costlist)
     set minvalue min map first costlist
@@ -410,8 +410,8 @@ to nearestEtoP
 end
 
 to-report dijkstra [source target]
-  ;print(word "pursuer: " source)
-  ;print(word "evader: " target)
+  print(word "pursuer: " source)
+  print(word "evader: " target)
   let distlist []
   let selected []
   let prev []
@@ -424,13 +424,13 @@ to-report dijkstra [source target]
   let j 0
   ;initialization of lists
   while [i != no-of-nodes]
-  [  
+  [
    set distlist lput 9999 distlist
-   set prev lput -1 prev 
+   set prev lput -1 prev
    set selected lput 0 selected
    set i i + 1
   ]
-  
+
   set selected replace-item start  selected 1
   set distlist replace-item start distlist 0
 
@@ -447,7 +447,7 @@ to-report dijkstra [source target]
         set distlist replace-item i distlist d
         set prev replace-item i prev start
       ]
-      if (( mini > ( item i distlist)) and (item i selected = 0)) 
+      if (( mini > ( item i distlist)) and (item i selected = 0))
       [
         set mini ( item i distlist)
         set m i
@@ -462,16 +462,16 @@ to-report dijkstra [source target]
   while [ start != -1 ]
   [
     set path fput start path
-    set start item start prev 
+    set start item start prev
   ]
-  
+
   ;print (word "path " path)
   ;print (word "cost to target: " item target distlist)
   set path remove-item 0 path
-  report (list item target distlist path)  
+  report (list item target distlist path)
 end
 
-to insert_edge 
+to insert_edge
   ;check if source exists
   ;check if destination exists
   let insedge 0
@@ -484,28 +484,71 @@ to insert_edge
         let choice (min-one-of (other turtles with [not link-neighbor? myself])
           [distance myself])
         if choice != nobody [
-          create-link-with choice       
+          create-link-with choice
           ask links[
             set cidnum [who] of end1
             set idnum [who] of end2
             matrix:set cost idnum cidnum 1
             matrix:set cost cidnum idnum 1
           ]
-          set no-of-links no-of-links + 1 
+          set no-of-links no-of-links + 1
           print (word "LINK INSERTED:"  )
           set insedge insedge + 1
          ; update_pursuit_list cidnum idnum
-          
+
         ]
         repeat 10
         [
           layout-spring turtles links 0.3 (world-width / (sqrt no-of-nodes)) 1
         ]
-      ] 
+      ]
   ]
 end
+to check
+  ;  let disconnected-agents []
 
-to del_edge 
+
+     ; let known-turtle nobody
+     ; ask one-of links[
+     ;   set known-turtle [who] of end1
+        ;set disconnected-agents turtles with [ nw:distance-to turtle known-turtle = false]
+        ;if any? disconnected-agents with [breed = evaders or breed = pursuers]
+        ;[
+        ;  print(word "DISCONNECTED AGENT!!!!")
+          ;foreach disconnected-agents
+          ;[
+         ;   ask disconnected-agents
+         ;   [
+         ;     print (word "Agentset: " disconnected-agents)
+         ;
+         ;   ]
+         ; ]
+      if breed = evaders or breed = pursuers
+      [
+        print(word "DISCONNECTED AGENT " who)
+        ifelse breed = evaders
+        [
+          set color red
+          set shape "circle"
+          set breed turtles
+          set ispursuer? false
+          set isevader? false
+          set Elist remove who Elist
+        ]
+        [
+          set color red
+          set shape "circle"
+          set breed turtles
+          set ispursuer? false
+          set isevader? false
+          set Plist remove who Plist
+        ]
+
+      ]
+        ;]
+end
+
+to del_edge
   ask one-of links [
     let source [who] of end1
     let target [who] of end2
@@ -515,9 +558,51 @@ to del_edge
     set no-of-links no-of-links - 1
     update_pursuit_list source target
     die
-   ] 
+   ]
+  let flag false
+  ask turtles [
+    if nw:eigenvector-centrality = false
+    [
+      set flag true
+    ]
+  ]
+  if flag = true [
+    print(word "DISCONNECTED GRAPH!!!!")
+    print(word "Number of Clusters: " length nw:weak-component-clusters)
+    print (word "hanapin ang agent sa cluster na disconnected")
+    color-clusters nw:weak-component-clusters
+  ]
 end
+to color-clusters [ clusters ]
+  ;; reset all colors
+  ask turtles [ set color gray - 3 ]
+  ask links [ set color gray - 3 ]
+  let n length clusters
+  let colors ifelse-value (n <= 12)
+    [ n-of n remove gray remove white base-colors ] ;; choose base colors other than white and gray
+    [ n-values n [ approximate-hsb (random 255) (255) (100 + random 100) ] ] ; too many colors - pick random ones
 
+    ;; loop through the clusters and colors zipped together
+    (foreach clusters colors [
+      let cluster ?1
+      let cluster-color ?2
+      let cluster-list sort cluster
+      print (word "Size of cluster: " length cluster-list)
+      foreach cluster-list [ ;; for each node in the cluster
+        ask ? [
+          ;; give the node the color of its cluster
+          set color cluster-color
+          ;; colorize the links from the node to other nodes in the same cluster
+          ;; link color is slightly darker..
+          ;if length cluster-list >= 1[
+          ;ask links [ if member? other-end cluster-list [ set color cluster-color - 1 ] ]
+         ; ask my-in-dirlinks [ if member? other-end cluster [ set color cluster-color - 1 ] ]
+         ; ask my-out-dirlinks [ if member? other-end cluster [ set color cluster-color - 1 ] ]
+          ;]
+        ]
+      ]
+    ])
+end
 to update_pursuit_list [node1 node2]   ;update the pursuit plan of pursuers affected
   print(word "update path with link: " node1 word " " node2)
   show word "Before PEtable:" PEtable
@@ -605,7 +690,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-50
+250
 1
 0
 Number
@@ -616,7 +701,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-3
+5
 1
 0
 Number
@@ -627,7 +712,7 @@ INPUTBOX
 191
 130
 no-of-links
-82
+500
 1
 0
 Number
@@ -638,7 +723,7 @@ INPUTBOX
 192
 193
 no-of-evaders
-0
+50
 1
 0
 Number
@@ -986,7 +1071,7 @@ Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 
 @#$#@#$#@
-NetLogo 5.0.4
+NetLogo 5.3.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
@@ -994,9 +1079,9 @@ NetLogo 5.0.4
 @#$#@#$#@
 default
 0.0
--0.2 0 1.0 0.0
+-0.2 0 0.0 1.0
 0.0 1 1.0 0.0
-0.2 0 1.0 0.0
+0.2 0 0.0 1.0
 link direction
 true
 0
