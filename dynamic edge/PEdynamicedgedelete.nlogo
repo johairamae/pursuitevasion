@@ -14,6 +14,7 @@ to setup
        set Plist []
        set Elist []
        set PEtable []
+       initialize-pursuittable
        set no-ticks 0
        set no-sec 0
        setup-nodes                     ;; a procedure to set nodes
@@ -44,6 +45,18 @@ to setup
     ]
   ]
 
+end
+
+to initialize-pursuittable
+  let i 0
+  let var 0
+  let temp [0]
+  while [i != no-of-pursuers]
+  [
+   set PEtable lput [] PEtable
+   set i i + 1
+  ]
+  print(word "pursuit evader table " PEtable )
 end
 
 to printAMatrix
@@ -121,11 +134,11 @@ to go
     evader-strategy
     if count evaders > 0
     [ pursuit-strategy ]
-    if tiktok = 0
+    ;if tiktok = 0
      ;[
        ;let ran random 2
        ;ifelse ran = 0 [ insert_edge ]
-       [ del_edge ]
+       ;[ del_edge ]
      ;]
     set no-sec no-sec + timer
 
@@ -275,7 +288,7 @@ to pursuit-strategy
     ifelse no-ticks > 0
     [
       set mlength min map length map last PEtable
-      ifelse mlength > 0
+      ifelse mlength > 0 ;kapag ung pursuit path ng bawat pursuers ay hindi pa naubos
       [
         set mlindex position min map length map last PEtable map length map last PEtable ;get the index of the list with min path length within PEtable
         set pursuerpath item 1 item mlindex PEtable ;path to pursue
@@ -285,9 +298,9 @@ to pursuit-strategy
         set oldlist item mlindex PEtable
         set PEtable replace-item mlindex PEtable replace-item 1 oldlist pursuerpath ;;continue to access the right index of what to be replaced
       ]
-      [
-        set pllist map length map last PEtable
-        set spllist sort map length map last PEtable
+      [; pag may naempty na na pursuitplan ng pursuer sa petable get the next min length compared to zero
+        set pllist map length map last PEtable ;path length list
+        set spllist sort map length map last PEtable  ;sorted path length list
 
         while [item scounter spllist = 0]
         [
@@ -305,10 +318,12 @@ to pursuit-strategy
         set PEtable replace-item mlindex PEtable replace-item 1 oldlist pursuerpath
       ]
 
-    ;  show word "PEtable: " PEtable
+      show word "PEtable: " PEtable
     ;  show word "target node: " targetnode
       printPlist
+      show word "mlindex: " mlindex
       move-to-node item mlindex Plist targetnode mlindex
+      show word "pursuer index: " find-index item mlindex Plist
       set no-ticks no-ticks - 1
     ]
     [
@@ -367,6 +382,16 @@ to initialize-evaders
     set Elist remove-duplicates Elist
 end
 
+to-report find-index [agent]
+  let index-count 0
+
+  while [item index-count Plist != agent]
+  [
+    set index-count index-count + 1
+  ]
+  report index-count
+end
+
 to nearestEtoP
   show word "enter nearestEtoP function " 0
   let pcounter 0
@@ -379,9 +404,11 @@ to nearestEtoP
   let minvalue 99
   let minindex 99
   let evader1 99
-  set PEtable []
 
-  ifelse is-disconnected = false[
+
+  ifelse is-disconnected = false
+  [
+    ;set PEtable []
     while [pcounter != no-of-pursuers ]
     [
       set currentp item pcounter Plist
@@ -391,21 +418,18 @@ to nearestEtoP
         set costlist lput dijkstra currentp currente costlist
         set ecounter ecounter + 1
       ]
-      ;print (word "costlist of pursuer " item pcounter Plist costlist)
       set minvalue min map first costlist
       set minindex position minvalue map first costlist
-      ;print(word "min " minvalue word "min index " minindex)
       set templist item 1 item minindex costlist
-      ;print(word "path " templist );
-      ;print(word "evader" item minindex Elist)
       set evader1 item minindex Elist
-      set PEtable lput (list evader1 templist) PEtable
+      set PEtable replace-item pcounter PEtable (list evader1 templist)
       set pcounter pcounter + 1
       set ecounter 0
       set costlist []
     ]
   ]
   [
+    ;if initially connected ang graph
     let clusters nw:weak-component-clusters
     print(word "DISCONNECTED GRAPH!!!!")
     print(word "Number of Clusters: " length clusters)
@@ -442,15 +466,12 @@ to nearestEtoP
             set costlist lput dijkstra currentp currente costlist
             set ecounter ecounter + 1
           ]
-          ;print (word "costlist of pursuer " item pcounter Plist costlist)
             set minvalue min map first costlist
             set minindex position minvalue map first costlist
-            ;print(word "min " minvalue word "min index " minindex)
             set templist item 1 item minindex costlist
-            ;print(word "path " templist );
-            ;print(word "evader" item minindex Elist)
             set evader1 item minindex Elist
-            set PEtable lput (list evader1 templist) PEtable
+            ;set PEtable lput (list evader1 templist) PEtable
+            set PEtable replace-item pcounter PEtable (list evader1 templist)
             set pcounter pcounter + 1
             set ecounter 0
             set costlist []
@@ -696,7 +717,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-20
+75
 1
 0
 Number
@@ -707,7 +728,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-5
+10
 1
 0
 Number
@@ -718,7 +739,7 @@ INPUTBOX
 191
 130
 no-of-links
-15
+200
 1
 0
 Number
@@ -729,7 +750,7 @@ INPUTBOX
 192
 193
 no-of-evaders
-5
+0
 1
 0
 Number
