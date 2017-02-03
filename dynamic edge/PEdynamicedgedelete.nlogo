@@ -10,7 +10,6 @@ to setup
   ifelse ( (no-of-nodes > 0) and (no-of-nodes >= (no-of-pursuers + no-of-evaders)) and (no-of-evaders > 0) and (no-of-pursuers > 0))
    [
        clear-all
-      ; set AMatrix matrix:make-constant no-of-nodes no-of-nodes 0
        set cost matrix:make-constant no-of-nodes no-of-nodes 999
        set Plist []
        set Elist []
@@ -382,27 +381,85 @@ to nearestEtoP
   let evader1 99
   set PEtable []
 
-  while [pcounter != no-of-pursuers ]
-  [
-    set currentp item pcounter Plist
-    while [ecounter != no-of-evaders ]
+  ifelse is-disconnected = false[
+    while [pcounter != no-of-pursuers ]
     [
-     set currente item ecounter Elist
-     set costlist lput dijkstra currentp currente costlist
-     set ecounter ecounter + 1
+      set currentp item pcounter Plist
+      while [ecounter != no-of-evaders ]
+      [
+        set currente item ecounter Elist
+        set costlist lput dijkstra currentp currente costlist
+        set ecounter ecounter + 1
+      ]
+      ;print (word "costlist of pursuer " item pcounter Plist costlist)
+      set minvalue min map first costlist
+      set minindex position minvalue map first costlist
+      ;print(word "min " minvalue word "min index " minindex)
+      set templist item 1 item minindex costlist
+      ;print(word "path " templist );
+      ;print(word "evader" item minindex Elist)
+      set evader1 item minindex Elist
+      set PEtable lput (list evader1 templist) PEtable
+      set pcounter pcounter + 1
+      set ecounter 0
+      set costlist []
     ]
-    ;print (word "costlist of pursuer " item pcounter Plist costlist)
-    set minvalue min map first costlist
-    set minindex position minvalue map first costlist
-    ;print(word "min " minvalue word "min index " minindex)
-    set templist item 1 item minindex costlist
-    ;print(word "path " templist );
-    ;print(word "evader" item minindex Elist)
-    set evader1 item minindex Elist
-    set PEtable lput (list evader1 templist) PEtable
-    set pcounter pcounter + 1
-    set ecounter 0
-    set costlist []
+  ]
+  [
+    let clusters nw:weak-component-clusters
+    print(word "DISCONNECTED GRAPH!!!!")
+    print(word "Number of Clusters: " length clusters)
+    print (word "hanapin ang agent sa cluster na disconnected")
+
+    ;; loop through the clusters and find pursuers and evaders
+    (foreach clusters [
+      let cluster ?1
+      let cluster-list sort cluster
+      print (word "Size of cluster: " length cluster-list word "list: " cluster-list)
+      if any? cluster with [breed = evaders or breed = pursuers] ;if the cluster has pursuers and evaders
+      [
+        let num-evaders count cluster with [breed = evaders]
+        let num-pursuers count cluster with [breed = pursuers]
+        let pursuelist cluster with [breed = pursuers]
+        let evaderlist cluster with [breed = evaders]
+        let p-list []
+        let e-list []
+        ask pursuelist [ set p-list lput who p-list ]
+        ask evaderlist [ set e-list lput who e-list ]
+        print (word "Evader count: " num-evaders word " list: " e-list )
+        print (word "Pursuer count: " num-pursuers word " list: " p-list)
+        if num-evaders > 0 [
+        set pcounter 0
+        set ecounter 0
+        set costlist []
+        set templist []
+        while [pcounter != num-pursuers ]
+        [
+          set currentp item pcounter p-list
+          while [ecounter != num-evaders ]
+          [
+            set currente item ecounter e-list
+            set costlist lput dijkstra currentp currente costlist
+            set ecounter ecounter + 1
+          ]
+          ;print (word "costlist of pursuer " item pcounter Plist costlist)
+            set minvalue min map first costlist
+            set minindex position minvalue map first costlist
+            ;print(word "min " minvalue word "min index " minindex)
+            set templist item 1 item minindex costlist
+            ;print(word "path " templist );
+            ;print(word "evader" item minindex Elist)
+            set evader1 item minindex Elist
+            set PEtable lput (list evader1 templist) PEtable
+            set pcounter pcounter + 1
+            set ecounter 0
+            set costlist []
+
+          ]
+        ]
+      ]
+    ])
+
   ]
   print(word "pursuit evader table " PEtable );
   set no-ticks sum map length map last PEtable
@@ -504,50 +561,20 @@ to insert_edge
       ]
   ]
 end
-to check
-  ;  let disconnected-agents []
 
-
-     ; let known-turtle nobody
-     ; ask one-of links[
-     ;   set known-turtle [who] of end1
-        ;set disconnected-agents turtles with [ nw:distance-to turtle known-turtle = false]
-        ;if any? disconnected-agents with [breed = evaders or breed = pursuers]
-        ;[
-        ;  print(word "DISCONNECTED AGENT!!!!")
-          ;foreach disconnected-agents
-          ;[
-         ;   ask disconnected-agents
-         ;   [
-         ;     print (word "Agentset: " disconnected-agents)
-         ;
-         ;   ]
-         ; ]
-      if breed = evaders or breed = pursuers
-      [
-        print(word "DISCONNECTED AGENT " who)
-        ifelse breed = evaders
-        [
-          set color red
-          set shape "circle"
-          set breed turtles
-          set ispursuer? false
-          set isevader? false
-          set Elist remove who Elist
-        ]
-        [
-          set color red
-          set shape "circle"
-          set breed turtles
-          set ispursuer? false
-          set isevader? false
-          set Plist remove who Plist
-        ]
-
-      ]
-        ;]
+to-report is-disconnected
+  let flag false
+  ask turtles [
+    if nw:eigenvector-centrality = false
+    [
+      set flag true
+    ]
+  ]
+  if flag = true [
+    color-clusters nw:weak-component-clusters
+  ]
+  report flag
 end
-
 to del_edge
   ask one-of links [
     let source [who] of end1
@@ -559,19 +586,6 @@ to del_edge
     update_pursuit_list source target
     die
    ]
-  let flag false
-  ask turtles [
-    if nw:eigenvector-centrality = false
-    [
-      set flag true
-    ]
-  ]
-  if flag = true [
-    print(word "DISCONNECTED GRAPH!!!!")
-    print(word "Number of Clusters: " length nw:weak-component-clusters)
-    print (word "hanapin ang agent sa cluster na disconnected")
-    color-clusters nw:weak-component-clusters
-  ]
 end
 to color-clusters [ clusters ]
   ;; reset all colors
@@ -587,18 +601,10 @@ to color-clusters [ clusters ]
       let cluster ?1
       let cluster-color ?2
       let cluster-list sort cluster
-      print (word "Size of cluster: " length cluster-list)
       foreach cluster-list [ ;; for each node in the cluster
         ask ? [
           ;; give the node the color of its cluster
           set color cluster-color
-          ;; colorize the links from the node to other nodes in the same cluster
-          ;; link color is slightly darker..
-          ;if length cluster-list >= 1[
-          ;ask links [ if member? other-end cluster-list [ set color cluster-color - 1 ] ]
-         ; ask my-in-dirlinks [ if member? other-end cluster [ set color cluster-color - 1 ] ]
-         ; ask my-out-dirlinks [ if member? other-end cluster [ set color cluster-color - 1 ] ]
-          ;]
         ]
       ]
     ])
@@ -690,7 +696,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-250
+20
 1
 0
 Number
@@ -712,7 +718,7 @@ INPUTBOX
 191
 130
 no-of-links
-500
+15
 1
 0
 Number
@@ -723,7 +729,7 @@ INPUTBOX
 192
 193
 no-of-evaders
-50
+5
 1
 0
 Number
