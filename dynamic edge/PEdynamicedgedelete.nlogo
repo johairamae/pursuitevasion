@@ -53,7 +53,7 @@ to initialize-pursuittable
   let temp [0]
   while [i != no-of-pursuers]
   [
-   set PEtable lput [] PEtable
+   set PEtable lput [[]] PEtable
    set i i + 1
   ]
   print(word "pursuit evader table " PEtable )
@@ -127,6 +127,8 @@ to go
   ifelse ( (count evaders = 0 ) or (ticks >= 500))
   [
      print (word "elapsed time: " no-sec)
+     if count evaders > 0
+     [print (word "Evaders cannot be caught because it is isolated")]
      stop
   ]
   [
@@ -134,11 +136,11 @@ to go
     evader-strategy
     if count evaders > 0
     [ pursuit-strategy ]
-    ;if tiktok = 0
+    if tiktok = 0
      ;[
        ;let ran random 2
-       ;ifelse ran = 0 [ insert_edge ]
-       ;[ del_edge ]
+       ;ifelse ran = 0 [ del_edge ]
+       [ insert_edge ]
      ;]
     set no-sec no-sec + timer
 
@@ -337,11 +339,13 @@ end
 to evader-strategy
   ask one-of evaders
   [
-    let emover who ;of one-of evaders
-    let etarget [who] of one-of link-neighbors
-    let index position emover Elist
-    printElist
-    move-to-node emover etarget index
+    if count link-neighbors > 0 [
+      let emover who ;of one-of evaders
+      let etarget [who] of one-of link-neighbors
+      let index position emover Elist
+      printElist
+      move-to-node emover etarget index
+    ]
     print(word "evader strategy")
     printElist
   ]
@@ -471,12 +475,28 @@ to nearestEtoP
             set templist item 1 item minindex costlist
             set evader1 item minindex Elist
             ;set PEtable lput (list evader1 templist) PEtable
-            set PEtable replace-item pcounter PEtable (list evader1 templist)
+            let pindex find-index currentp
+            show (word "Pursuer: " currentp word "index: " pindex)
+            set PEtable replace-item  pindex PEtable (list evader1 templist)
             set pcounter pcounter + 1
             set ecounter 0
             set costlist []
 
           ]
+        ]
+        if num-evaders = 0 and num-pursuers > 0
+        [
+          set pcounter 0
+          set templist []
+        while [pcounter != num-pursuers ]
+        [
+          set currentp item pcounter p-list
+          set templist []
+          let pindex find-index currentp
+          set PEtable replace-item  pindex PEtable (list currentp templist)
+          set pcounter pcounter + 1
+          ]
+
         ]
       ]
     ])
@@ -597,16 +617,18 @@ to-report is-disconnected
   report flag
 end
 to del_edge
-  ask one-of links [
-    let source [who] of end1
-    let target [who] of end2
-    matrix:set cost source target 999
-    matrix:set cost target source 999
-    print (word "REMOVE A LINK")
-    set no-of-links no-of-links - 1
-    update_pursuit_list source target
-    die
-   ]
+  if count links > 0 [
+    ask one-of links [
+      let source [who] of end1
+      let target [who] of end2
+      matrix:set cost source target 999
+      matrix:set cost target source 999
+      print (word "REMOVE A LINK")
+      set no-of-links no-of-links - 1
+      update_pursuit_list source target
+      die
+    ]
+  ]
 end
 to color-clusters [ clusters ]
   ;; reset all colors
@@ -717,7 +739,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-75
+10
 1
 0
 Number
@@ -728,7 +750,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-10
+3
 1
 0
 Number
@@ -739,7 +761,7 @@ INPUTBOX
 191
 130
 no-of-links
-200
+11
 1
 0
 Number
