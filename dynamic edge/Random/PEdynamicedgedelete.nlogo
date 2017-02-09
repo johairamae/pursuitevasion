@@ -10,7 +10,7 @@ to setup
   ifelse ( (no-of-nodes > 0) and (no-of-nodes >= (no-of-pursuers + no-of-evaders)) and (no-of-evaders > 0) and (no-of-pursuers > 0))
    [
        clear-all
-       set cost matrix:make-constant no-of-nodes no-of-nodes 999
+       set cost matrix:make-constant no-of-nodes no-of-nodes 99999
        set Plist []
        set Elist []
        set PEtable []
@@ -132,27 +132,29 @@ to go
      stop
   ]
   [
+    tick
     reset-timer
     evader-strategy
     if count evaders > 0
-    [ pursuit-strategy ]
-    if tiktok = 0
-     ;[
-       ;let ran random 2
-       ;ifelse ran = 0 [ del_edge ]
-       [ insert_edge ]
-     ;]
+    [ pursuit-strategy
+      if tiktok = 0
+      [
+        let ran random 2
+        ifelse ran = 0 [ del_edge ]
+        [ insert_edge ]
+      ]
+    ]
     set no-sec no-sec + timer
 
     print (word "elapsed time: " no-sec)
   ]
-  tick
+
 end
 
 to move-to-node [cnode nnode index]
-  print(word "source:" cnode word"  target:" nnode word "  index:" index)
-  let cnodeindex 999
-  let nnodeindex 999
+  ;print(word "source:" cnode word"  target:" nnode word "  index:" index)
+  let cnodeindex 99999
+  let nnodeindex 99999
   ask turtle cnode
   [
 
@@ -282,13 +284,15 @@ to pursuit-strategy
 
   ifelse no-of-nodes = 2
   [
-    printPlist
+   ; printPlist
     move-to-node item 0 Plist item 0 Elist 0
   ]
   [
     print(word "pursuit strategy")
     ifelse no-ticks > 0
     [
+       print(word "pursuit strategy1")
+
       set mlength min map length map last PEtable
       ifelse mlength > 0 ;kapag ung pursuit path ng bawat pursuers ay hindi pa naubos
       [
@@ -320,15 +324,17 @@ to pursuit-strategy
         set PEtable replace-item mlindex PEtable replace-item 1 oldlist pursuerpath
       ]
 
-      show word "PEtable: " PEtable
+     ; show word "PEtable: " PEtable
     ;  show word "target node: " targetnode
-      printPlist
-      show word "mlindex: " mlindex
+     ; printPlist
+     ; show word "mlindex: " mlindex
       move-to-node item mlindex Plist targetnode mlindex
-      show word "pursuer index: " find-index item mlindex Plist
+     ; show word "pursuer index: " find-index item mlindex Plist
       set no-ticks no-ticks - 1
     ]
     [
+       print(word "pursuit strategy2")
+
       nearestEtoP
       show word "no  more ticks" no-ticks
     ]
@@ -401,8 +407,8 @@ to nearestEtoP
   let pcounter 0
   let ecounter 0
   ;let co 999999
-  let currentp 9999
-  let currente 9999
+  let currentp 99999
+  let currente 99999
   let costlist []
   let templist []
   let minvalue 99
@@ -436,14 +442,14 @@ to nearestEtoP
     ;if initially connected ang graph
     let clusters nw:weak-component-clusters
     print(word "DISCONNECTED GRAPH!!!!")
-    print(word "Number of Clusters: " length clusters)
-    print (word "hanapin ang agent sa cluster na disconnected")
+   ; print(word "Number of Clusters: " length clusters)
+   ; print (word "hanapin ang agent sa cluster na disconnected")
 
     ;; loop through the clusters and find pursuers and evaders
     (foreach clusters [
       let cluster ?1
       let cluster-list sort cluster
-      print (word "Size of cluster: " length cluster-list word "list: " cluster-list)
+    ;  print (word "Size of cluster: " length cluster-list word "list: " cluster-list)
       if any? cluster with [breed = evaders or breed = pursuers] ;if the cluster has pursuers and evaders
       [
         let num-evaders count cluster with [breed = evaders]
@@ -454,8 +460,8 @@ to nearestEtoP
         let e-list []
         ask pursuelist [ set p-list lput who p-list ]
         ask evaderlist [ set e-list lput who e-list ]
-        print (word "Evader count: " num-evaders word " list: " e-list )
-        print (word "Pursuer count: " num-pursuers word " list: " p-list)
+     ;   print (word "Evader count: " num-evaders word " list: " e-list )
+      ;  print (word "Pursuer count: " num-pursuers word " list: " p-list)
         if num-evaders > 0 [
         set pcounter 0
         set ecounter 0
@@ -476,7 +482,7 @@ to nearestEtoP
             set evader1 item minindex Elist
             ;set PEtable lput (list evader1 templist) PEtable
             let pindex find-index currentp
-            show (word "Pursuer: " currentp word "index: " pindex)
+       ;     show (word "Pursuer: " currentp word "index: " pindex)
             set PEtable replace-item  pindex PEtable (list evader1 templist)
             set pcounter pcounter + 1
             set ecounter 0
@@ -523,7 +529,7 @@ to-report dijkstra [source target]
   ;initialization of lists
   while [i != no-of-nodes]
   [
-   set distlist lput 9999 distlist
+   set distlist lput 99999 distlist
    set prev lput -1 prev
    set selected lput 0 selected
    set i i + 1
@@ -534,7 +540,7 @@ to-report dijkstra [source target]
 
   while [ (item target selected) = 0]
   [
-    set mini 999
+    set mini 99999
     set m 0
     set i 0
     while [ i != no-of-nodes ]
@@ -621,8 +627,8 @@ to del_edge
     ask one-of links [
       let source [who] of end1
       let target [who] of end2
-      matrix:set cost source target 999
-      matrix:set cost target source 999
+      matrix:set cost source target 99999
+      matrix:set cost target source 99999
       print (word "REMOVE A LINK")
       set no-of-links no-of-links - 1
       update_pursuit_list source target
@@ -739,7 +745,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-32
+30
 1
 0
 Number
@@ -761,7 +767,7 @@ INPUTBOX
 191
 130
 no-of-links
-59
+39
 1
 0
 Number

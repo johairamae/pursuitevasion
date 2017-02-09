@@ -10,7 +10,7 @@ to setup
   ifelse ( (no-of-nodes > 0) and (no-of-nodes >= (no-of-pursuers + no-of-evaders)) and (no-of-evaders > 0) and (no-of-pursuers > 0))
    [
        clear-all
-       set cost matrix:make-constant no-of-nodes no-of-nodes 999
+       set cost matrix:make-constant no-of-nodes no-of-nodes 99999
        set Plist []
        set Elist []
        set PEtable []
@@ -19,13 +19,18 @@ to setup
        set no-sec 0
        setup-nodes                     ;; a procedure to set nodes
        setup-edges                     ;; a procedure to set edges
-       ask turtles [ set color red]    ;; paint nodes red
+       ask turtles [ set color gray]    ;; paint nodes red
        ask links [set color white]     ;; paint edges white
        initialize-pursuers
        initialize-evaders
        printAMatrix
        printPlist
        printElist
+       ask links [
+        ifelse show-weights?
+        [ set label weight ]
+        [ set label "" ]
+      ]
        nearestEtoP               ;a function to compute the nearest evader to every pursuer
        reset-ticks
   ]
@@ -103,8 +108,10 @@ to setup-edges
           ask links[
             set cidnum [who] of end1
             set idnum [who] of end2
-            matrix:set cost idnum cidnum 1
-            matrix:set cost cidnum idnum 1
+            let ran random 100
+            matrix:set cost idnum cidnum ran
+            matrix:set cost cidnum idnum ran
+            set weight ran
           ]
         ]
       ]
@@ -132,27 +139,32 @@ to go
      stop
   ]
   [
+    tick
     reset-timer
     evader-strategy
     if count evaders > 0
-    [ pursuit-strategy ]
-    if tiktok = 0
-     ;[
-       ;let ran random 2
-       ;ifelse ran = 0 [ del_edge ]
-       [ insert_edge ]
-     ;]
+    [ pursuit-strategy
+      ask links [
+        ifelse show-weights?
+        [ set label weight ]
+        [ set label "" ]
+      ]
+      if tiktok = 0
+      [
+        ; dynamic_edge_weight
+      ]
+    ]
     set no-sec no-sec + timer
 
     print (word "elapsed time: " no-sec)
   ]
-  tick
+
 end
 
 to move-to-node [cnode nnode index]
-  print(word "source:" cnode word"  target:" nnode word "  index:" index)
-  let cnodeindex 999
-  let nnodeindex 999
+  ;print(word "source:" cnode word"  target:" nnode word "  index:" index)
+  let cnodeindex 99999
+  let nnodeindex 99999
   ask turtle cnode
   [
 
@@ -160,15 +172,14 @@ to move-to-node [cnode nnode index]
    [
      ifelse dupli cnode Plist = false
      [ ;return turtle to normal state
-       set color red
+       set color gray
        set shape "circle"
        set breed turtles
        set ispursuer? false
        set isevader? false
      ]
      [
-       set color yellow
-       set shape "triangle"
+       set shape "person police"
        set ispursuer? true
        set breed pursuers
      ]
@@ -199,8 +210,7 @@ to move-to-node [cnode nnode index]
          terminate-pursuit nnode
          set Plist replace-item index Plist nnode
        ]
-       set color yellow
-       set shape "triangle"
+       set shape "person police"
        set ispursuer? true
        set breed pursuers
      ]
@@ -208,15 +218,15 @@ to move-to-node [cnode nnode index]
    [
      ifelse dupli cnode Elist = false
      [
-       set color red
+       set color gray
        set shape "circle"
        set breed turtles
        set ispursuer? false
        set isevader? false
      ]
      [
-       set color blue
-       set shape "square"
+       ;set color blue
+       set shape "person service"
        set isevader? true
        set breed evaders
      ]
@@ -224,8 +234,8 @@ to move-to-node [cnode nnode index]
      [
        ifelse breed != pursuers
        [
-         set color blue
-         set shape "square"
+        ; set color blue
+         set shape "person service"
          set isevader? true
          set breed evaders
          set Elist replace-item index Elist nnode
@@ -250,13 +260,13 @@ to-report dupli [ c pelist]
 end
 
 to terminate-pursuit [evader1]
-  ;show word "terminate pursuit of evader: " evader1
-  ;show word "Before PEtable:"PEtable
+  show word "terminate pursuit of evader: " evader1
+  show word "Before PEtable:"PEtable
   let oldepath []
   let bilang 0
   let remticks 0
   foreach PEtable [
-    if first ? = evader1
+    if (length last ? > 0) and (last (last ?)  = evader1)
     [
         set oldepath ?
         set remticks length last oldepath
@@ -265,7 +275,7 @@ to terminate-pursuit [evader1]
     ]
     set bilang bilang + 1
   ]
-  ;show word "After PEtable: " PEtable
+  show word "After PEtable: " PEtable
 end
 
 to pursuit-strategy
@@ -282,13 +292,15 @@ to pursuit-strategy
 
   ifelse no-of-nodes = 2
   [
-    printPlist
+   ; printPlist
     move-to-node item 0 Plist item 0 Elist 0
   ]
   [
     print(word "pursuit strategy")
     ifelse no-ticks > 0
     [
+       print(word "pursuit strategy1")
+
       set mlength min map length map last PEtable
       ifelse mlength > 0 ;kapag ung pursuit path ng bawat pursuers ay hindi pa naubos
       [
@@ -320,15 +332,17 @@ to pursuit-strategy
         set PEtable replace-item mlindex PEtable replace-item 1 oldlist pursuerpath
       ]
 
-      show word "PEtable: " PEtable
+     ; show word "PEtable: " PEtable
     ;  show word "target node: " targetnode
-      printPlist
-      show word "mlindex: " mlindex
+     ; printPlist
+     ; show word "mlindex: " mlindex
       move-to-node item mlindex Plist targetnode mlindex
-      show word "pursuer index: " find-index item mlindex Plist
+     ; show word "pursuer index: " find-index item mlindex Plist
       set no-ticks no-ticks - 1
     ]
     [
+       print(word "pursuit strategy2")
+
       nearestEtoP
       show word "no  more ticks" no-ticks
     ]
@@ -352,12 +366,11 @@ to evader-strategy
 end
 
 to initialize-pursuers
-  set-default-shape pursuers "triangle"
+  set-default-shape pursuers "person police"
   while [ count pursuers != no-of-pursuers] ;; num of pursuers given by the user from interface
     [
       ask one-of turtles
       [
-        set color yellow
         set ispursuer? true
         set breed pursuers
         set Plist lput who Plist
@@ -367,7 +380,7 @@ to initialize-pursuers
 end
 
 to initialize-evaders
-  set-default-shape evaders "square"
+  set-default-shape evaders "person service"
   while [ count evaders != no-of-evaders]  ;; num of evaders given by the user from interface
     [
       ask one-of turtles
@@ -376,7 +389,7 @@ to initialize-evaders
 
         if ispursuer? != true
         [
-          set color blue
+         ; set color blue
           set breed evaders
           set isevader? true
           set Elist lput who Elist
@@ -401,8 +414,8 @@ to nearestEtoP
   let pcounter 0
   let ecounter 0
   ;let co 999999
-  let currentp 9999
-  let currente 9999
+  let currentp 99999
+  let currente 99999
   let costlist []
   let templist []
   let minvalue 99
@@ -425,8 +438,10 @@ to nearestEtoP
       set minvalue min map first costlist
       set minindex position minvalue map first costlist
       set templist item 1 item minindex costlist
-      set evader1 item minindex Elist
-      set PEtable replace-item pcounter PEtable (list evader1 templist)
+      ;set evader1 item minindex Elist
+      show (word "costlist: " costlist)
+      show (word "minvalue: " minvalue)
+      set PEtable replace-item pcounter PEtable (list minvalue templist)
       set pcounter pcounter + 1
       set ecounter 0
       set costlist []
@@ -436,14 +451,14 @@ to nearestEtoP
     ;if initially connected ang graph
     let clusters nw:weak-component-clusters
     print(word "DISCONNECTED GRAPH!!!!")
-    print(word "Number of Clusters: " length clusters)
-    print (word "hanapin ang agent sa cluster na disconnected")
+   ; print(word "Number of Clusters: " length clusters)
+   ; print (word "hanapin ang agent sa cluster na disconnected")
 
     ;; loop through the clusters and find pursuers and evaders
     (foreach clusters [
       let cluster ?1
       let cluster-list sort cluster
-      print (word "Size of cluster: " length cluster-list word "list: " cluster-list)
+    ;  print (word "Size of cluster: " length cluster-list word "list: " cluster-list)
       if any? cluster with [breed = evaders or breed = pursuers] ;if the cluster has pursuers and evaders
       [
         let num-evaders count cluster with [breed = evaders]
@@ -454,8 +469,8 @@ to nearestEtoP
         let e-list []
         ask pursuelist [ set p-list lput who p-list ]
         ask evaderlist [ set e-list lput who e-list ]
-        print (word "Evader count: " num-evaders word " list: " e-list )
-        print (word "Pursuer count: " num-pursuers word " list: " p-list)
+     ;   print (word "Evader count: " num-evaders word " list: " e-list )
+      ;  print (word "Pursuer count: " num-pursuers word " list: " p-list)
         if num-evaders > 0 [
         set pcounter 0
         set ecounter 0
@@ -473,28 +488,31 @@ to nearestEtoP
             set minvalue min map first costlist
             set minindex position minvalue map first costlist
             set templist item 1 item minindex costlist
-            set evader1 item minindex Elist
+           ; set evader1 item minindex Elist
             ;set PEtable lput (list evader1 templist) PEtable
-            let pindex find-index currentp
-            show (word "Pursuer: " currentp word "index: " pindex)
-            set PEtable replace-item  pindex PEtable (list evader1 templist)
+
+            show (word "costlist: " costlist)
+            show (word "minvalue: " minvalue)
+            let pindex find-index currentp ;paano naman kung dalawang pursuer at the same node?
+            set PEtable replace-item  pindex PEtable (list minvalue templist)
             set pcounter pcounter + 1
             set ecounter 0
             set costlist []
 
+
           ]
         ]
-        if num-evaders = 0 and num-pursuers > 0
+        if num-evaders = 0 and num-pursuers > 0 ; if there are pursuers in isolated graph but no evaders
         [
           set pcounter 0
           set templist []
-        while [pcounter != num-pursuers ]
-        [
-          set currentp item pcounter p-list
-          set templist []
-          let pindex find-index currentp
-          set PEtable replace-item  pindex PEtable (list currentp templist)
-          set pcounter pcounter + 1
+          while [pcounter != num-pursuers ]
+          [
+            set currentp item pcounter p-list
+            set templist []
+            let pindex find-index currentp
+            set PEtable replace-item  pindex PEtable (list currentp templist)
+            set pcounter pcounter + 1
           ]
 
         ]
@@ -523,7 +541,7 @@ to-report dijkstra [source target]
   ;initialization of lists
   while [i != no-of-nodes]
   [
-   set distlist lput 9999 distlist
+   set distlist lput 99999 distlist
    set prev lput -1 prev
    set selected lput 0 selected
    set i i + 1
@@ -534,7 +552,7 @@ to-report dijkstra [source target]
 
   while [ (item target selected) = 0]
   [
-    set mini 999
+    set mini 99999
     set m 0
     set i 0
     while [ i != no-of-nodes ]
@@ -563,44 +581,10 @@ to-report dijkstra [source target]
     set start item start prev
   ]
 
-  ;print (word "path " path)
-  ;print (word "cost to target: " item target distlist)
+  print (word "path " path)
+  print (word "cost to target: " item target distlist)
   set path remove-item 0 path
   report (list item target distlist path)
-end
-
-to insert_edge
-  ;check if source exists
-  ;check if destination exists
-  let insedge 0
-  while [insedge = 0]
-  [
-  ask one-of turtles
-      [
-        let idnum 0
-        let cidnum 0
-        let choice (min-one-of (other turtles with [not link-neighbor? myself])
-          [distance myself])
-        if choice != nobody [
-          create-link-with choice
-          ask links[
-            set cidnum [who] of end1
-            set idnum [who] of end2
-            matrix:set cost idnum cidnum 1
-            matrix:set cost cidnum idnum 1
-          ]
-          set no-of-links no-of-links + 1
-          print (word "LINK INSERTED:"  )
-          set insedge insedge + 1
-         ; update_pursuit_list cidnum idnum
-
-        ]
-        repeat 10
-        [
-          layout-spring turtles links 0.3 (world-width / (sqrt no-of-nodes)) 1
-        ]
-      ]
-  ]
 end
 
 to-report is-disconnected
@@ -616,20 +600,7 @@ to-report is-disconnected
   ]
   report flag
 end
-to del_edge
-  if count links > 0 [
-    ask one-of links [
-      let source [who] of end1
-      let target [who] of end2
-      matrix:set cost source target 999
-      matrix:set cost target source 999
-      print (word "REMOVE A LINK")
-      set no-of-links no-of-links - 1
-      update_pursuit_list source target
-      die
-    ]
-  ]
-end
+
 to color-clusters [ clusters ]
   ;; reset all colors
   ask turtles [ set color gray - 3 ]
@@ -652,6 +623,29 @@ to color-clusters [ clusters ]
       ]
     ])
 end
+
+to dynamic_edge_weight
+  if count links > 0 [
+    ask one-of links [
+      let source [who] of end1
+      let target [who] of end2
+      let ran random 100
+      let oldweight weight
+      matrix:set cost source target ran
+      matrix:set cost target source ran
+      set weight ran
+      ifelse oldweight > ran
+      [print (word "Nabawasan ang weight")]
+      [
+        print (word "Nadagdagan ang weight")
+        update_pursuit_list source target
+      ]
+
+      print (word "Added Edge Weight")
+    ]
+  ]
+end
+
 to update_pursuit_list [node1 node2]   ;update the pursuit plan of pursuers affected
   print(word "update path with link: " node1 word " " node2)
   show word "Before PEtable:" PEtable
@@ -739,7 +733,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-32
+30
 1
 0
 Number
@@ -750,7 +744,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-2
+5
 1
 0
 Number
@@ -761,7 +755,7 @@ INPUTBOX
 191
 130
 no-of-links
-59
+50
 1
 0
 Number
@@ -772,10 +766,21 @@ INPUTBOX
 192
 193
 no-of-evaders
-0
+6
 1
 0
 Number
+
+SWITCH
+28
+212
+177
+245
+show-weights?
+show-weights?
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -993,6 +998,49 @@ Polygon -7500403 true true 105 90 120 195 90 285 105 300 135 300 150 225 165 300
 Rectangle -7500403 true true 127 79 172 94
 Polygon -7500403 true true 195 90 240 150 225 180 165 105
 Polygon -7500403 true true 105 90 60 150 75 180 135 105
+
+person police
+false
+1
+Polygon -1 true false 124 91 150 165 178 91
+Polygon -13345367 true false 134 91 149 106 134 181 149 196 164 181 149 106 164 91
+Polygon -13345367 true false 180 195 120 195 90 285 105 300 135 300 150 225 165 300 195 300 210 285
+Polygon -13345367 true false 120 90 105 90 60 195 90 210 116 158 120 195 180 195 184 158 210 210 240 195 195 90 180 90 165 105 150 165 135 105 120 90
+Rectangle -7500403 true false 123 76 176 92
+Circle -7500403 true false 110 5 80
+Polygon -13345367 true false 150 26 110 41 97 29 137 -1 158 6 185 0 201 6 196 23 204 34 180 33
+Line -13345367 false 121 90 194 90
+Line -16777216 false 148 143 150 196
+Rectangle -16777216 true false 116 186 182 198
+Rectangle -16777216 true false 109 183 124 227
+Rectangle -16777216 true false 176 183 195 205
+Circle -1 true false 152 143 9
+Circle -1 true false 152 166 9
+Polygon -1184463 true false 172 112 191 112 185 133 179 133
+Polygon -1184463 true false 175 6 194 6 189 21 180 21
+Line -1184463 false 149 24 197 24
+Rectangle -16777216 true false 101 177 122 187
+Rectangle -16777216 true false 179 164 183 186
+
+person service
+false
+12
+Polygon -7500403 true false 180 195 120 195 90 285 105 300 135 300 150 225 165 300 195 300 210 285
+Polygon -1 true false 120 90 105 90 60 195 90 210 120 150 120 195 180 195 180 150 210 210 240 195 195 90 180 90 165 105 150 165 135 105 120 90
+Polygon -1 true false 123 90 149 141 177 90
+Rectangle -7500403 true false 123 76 176 92
+Circle -7500403 true false 110 5 80
+Line -13345367 false 121 90 194 90
+Line -16777216 false 148 143 150 196
+Rectangle -16777216 true false 116 186 182 198
+Circle -1 true false 152 143 9
+Circle -1 true false 152 166 9
+Rectangle -16777216 true false 179 164 183 186
+Polygon -2674135 true false 180 90 195 90 183 160 180 195 150 195 150 135 180 90
+Polygon -2674135 true false 120 90 105 90 114 161 120 195 150 195 150 135 120 90
+Polygon -2674135 true false 155 91 128 77 128 101
+Rectangle -16777216 true false 118 129 141 140
+Polygon -2674135 true false 145 91 172 77 172 101
 
 plant
 false
