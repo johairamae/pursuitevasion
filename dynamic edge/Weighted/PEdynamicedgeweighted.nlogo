@@ -3,7 +3,7 @@ turtles-own [ ispursuer? isevader? idnumber]
 links-own [ weight ]
 breed [ pursuers pursuer ]
 breed [ evaders evader ]
-globals [AMatrix cost Plist Elist PEtable no-ticks no-sec]
+globals [AMatrix cost Plist Elist PEtable no-ticks no-sec time-traveled]
 
 to setup
                         ;; clear everything on canvas
@@ -17,6 +17,7 @@ to setup
        initialize-pursuittable
        set no-ticks 0
        set no-sec 0
+       set time-traveled 0
        setup-nodes                     ;; a procedure to set nodes
        setup-edges                     ;; a procedure to set edges
        ask turtles [ set color gray]    ;; paint nodes red
@@ -26,12 +27,17 @@ to setup
        printAMatrix
        printPlist
        printElist
+       nearestEtoP               ;a function to compute the nearest evader to every pursuer
        ask links [
         ifelse show-weights?
         [ set label weight ]
         [ set label "" ]
-      ]
-       nearestEtoP               ;a function to compute the nearest evader to every pursuer
+       ]
+       ask turtles [
+       ifelse show-node?
+        [ set label who ]
+        [ set label "" ]
+       ]
        reset-ticks
   ]
   [
@@ -121,6 +127,7 @@ to setup-edges
     [
       layout-spring turtles links 0.3 (world-width / (sqrt no-of-nodes)) 1
     ]
+
   ]
   [
     user-message ("no of edges is more than max no of edges allowed")
@@ -149,20 +156,26 @@ to go
         [ set label weight ]
         [ set label "" ]
       ]
-      if tiktok = 0
-      [
-        ; dynamic_edge_weight
-      ]
+      ask turtles [
+       ifelse show-node?
+        [ set label who ]
+        [ set label "" ]
+       ]
+      ;if tiktok = 0
+      ;[
+         dynamic_edge_weight
+      ;]
     ]
     set no-sec no-sec + timer
 
     print (word "elapsed time: " no-sec)
+    print (word "total travel time: " time-traveled)
   ]
 
 end
 
 to move-to-node [cnode nnode index]
-  ;print(word "source:" cnode word"  target:" nnode word "  index:" index)
+  print(word "source:" cnode word"  target:" nnode word "  index:" index)
   let cnodeindex 99999
   let nnodeindex 99999
   ask turtle cnode
@@ -170,6 +183,12 @@ to move-to-node [cnode nnode index]
 
    ifelse ispursuer? = true
    [
+
+     ask link cnode nnode [
+       show word "linkweight: " weight
+       set time-traveled time-traveled + weight
+
+     ]
      ifelse dupli cnode Plist = false
      [ ;return turtle to normal state
        set color gray
@@ -265,16 +284,19 @@ to terminate-pursuit [evader1]
   let oldepath []
   let bilang 0
   let remticks 0
+  let t-time 0
   foreach PEtable [
     if (length last ? > 0) and (last (last ?)  = evader1)
     [
         set oldepath ?
         set remticks length last oldepath
+        set t-time first oldepath
         set no-ticks no-ticks - remticks
         set PEtable replace-item bilang PEtable replace-item 1 oldepath []
     ]
     set bilang bilang + 1
   ]
+
   show word "After PEtable: " PEtable
 end
 
@@ -299,8 +321,6 @@ to pursuit-strategy
     print(word "pursuit strategy")
     ifelse no-ticks > 0
     [
-       print(word "pursuit strategy1")
-
       set mlength min map length map last PEtable
       ifelse mlength > 0 ;kapag ung pursuit path ng bawat pursuers ay hindi pa naubos
       [
@@ -341,10 +361,8 @@ to pursuit-strategy
       set no-ticks no-ticks - 1
     ]
     [
-       print(word "pursuit strategy2")
-
-      nearestEtoP
       show word "no  more ticks" no-ticks
+      nearestEtoP
     ]
   ]
   printPlist
@@ -638,15 +656,59 @@ to dynamic_edge_weight
       [print (word "Nabawasan ang weight")]
       [
         print (word "Nadagdagan ang weight")
-        update_pursuit_list source target
+        update_edge_weight_path source target
       ]
 
-      print (word "Added Edge Weight")
+      ;print (word "Added Edge Weight")
     ]
   ]
 end
 
-to update_pursuit_list [node1 node2]   ;update the pursuit plan of pursuers affected
+to update_edge_weight_path [node1 node2]
+  print(word "update path with link: " node1 word " " node2)
+  show word "Before PEtable:" PEtable
+  let bilang 0
+  let flag false
+  let source 99999
+  let target 99999
+  let costlist []
+  let nweight 99999
+  let cweight 99999
+  foreach PEtable [
+    set flag false
+    set costlist []
+    set nweight 99999
+    if (member? node1 item 1 ?) and (member? node2 item 1 ?) ; may problema dito, ksi baka ung isang node ay weight pala
+    [
+      print( word "UPDATE PATH WEIGHT!!!!" bilang)
+      set source item bilang Plist
+      set target last (last ?)
+      set cweight first ?
+      show word "source: " source
+      show word "target: " target
+      set costlist dijkstra source target
+      show word "costlist" costlist
+      set nweight first costlist
+      show word "oldweight: " cweight
+      show word "new weight: " nweight
+      if nweight < cweight [
+        let oldlength length last ?
+        let newlength length last costlist
+        let remticks oldlength - newlength
+        show word "number of ticks added: " remticks
+        print( word "UPDATE SHORTER PATH WEIGHT!!!!")
+        set no-ticks no-ticks - (abs remticks)
+        set PEtable replace-item bilang PEtable costlist
+      ]
+
+    ]
+    set bilang bilang + 1
+  ]
+  show word "After PEtable: " PEtable
+end
+
+
+to delete_path_of_edge_removed [node1 node2]   ;update the pursuit plan of pursuers affected
   print(word "update path with link: " node1 word " " node2)
   show word "Before PEtable:" PEtable
   let oldepath []
@@ -733,7 +795,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-30
+100
 1
 0
 Number
@@ -744,7 +806,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-5
+3
 1
 0
 Number
@@ -755,7 +817,7 @@ INPUTBOX
 191
 130
 no-of-links
-50
+250
 1
 0
 Number
@@ -766,7 +828,7 @@ INPUTBOX
 192
 193
 no-of-evaders
-6
+0
 1
 0
 Number
@@ -778,7 +840,18 @@ SWITCH
 245
 show-weights?
 show-weights?
-0
+1
+1
+-1000
+
+SWITCH
+38
+262
+171
+295
+show-node?
+show-node?
+1
 1
 -1000
 
