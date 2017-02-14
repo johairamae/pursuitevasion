@@ -161,10 +161,10 @@ to go
         [ set label who ]
         [ set label "" ]
        ]
-      ;if tiktok = 0
-      ;[
+      if tiktok = 0
+      [
          dynamic_edge_weight
-      ;]
+      ]
     ]
     set no-sec no-sec + timer
 
@@ -620,9 +620,7 @@ to-report is-disconnected
 end
 
 to color-clusters [ clusters ]
-  ;; reset all colors
   ask turtles [ set color gray - 3 ]
- ; ask links [ set color gray - 3 ]
   let n length clusters
   let colors ifelse-value (n <= 12)
     [ n-of n remove gray remove white base-colors ] ;; choose base colors other than white and gray
