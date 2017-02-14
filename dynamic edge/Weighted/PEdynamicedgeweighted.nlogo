@@ -457,8 +457,8 @@ to nearestEtoP
       set minindex position minvalue map first costlist
       set templist item 1 item minindex costlist
       ;set evader1 item minindex Elist
-      show (word "costlist: " costlist)
-      show (word "minvalue: " minvalue)
+      ;show (word "costlist: " costlist)
+      ;show (word "minvalue: " minvalue)
       set PEtable replace-item pcounter PEtable (list minvalue templist)
       set pcounter pcounter + 1
       set ecounter 0
@@ -509,8 +509,8 @@ to nearestEtoP
            ; set evader1 item minindex Elist
             ;set PEtable lput (list evader1 templist) PEtable
 
-            show (word "costlist: " costlist)
-            show (word "minvalue: " minvalue)
+           ; show (word "costlist: " costlist)
+           ; show (word "minvalue: " minvalue)
             let pindex find-index currentp ;paano naman kung dalawang pursuer at the same node?
             set PEtable replace-item  pindex PEtable (list minvalue templist)
             set pcounter pcounter + 1
@@ -544,8 +544,8 @@ to nearestEtoP
 end
 
 to-report dijkstra [source target]
-  print(word "pursuer: " source)
-  print(word "evader: " target)
+ ; print(word "pursuer: " source)
+ ; print(word "evader: " target)
   let distlist []
   let selected []
   let prev []
@@ -599,8 +599,8 @@ to-report dijkstra [source target]
     set start item start prev
   ]
 
-  print (word "path " path)
-  print (word "cost to target: " item target distlist)
+  ;print (word "path " path)
+  ;print (word "cost to target: " item target distlist)
   set path remove-item 0 path
   report (list item target distlist path)
 end
@@ -653,80 +653,67 @@ to dynamic_edge_weight
       matrix:set cost target source ran
       set weight ran
       ifelse oldweight > ran
-      [print (word "Nabawasan ang weight")]
       [
-        print (word "Nadagdagan ang weight")
+        print (word "Nabawasan ang weight: " (oldweight - ran))
+        update_edge_weight_path2 (oldweight - ran) source target
+
+      ]
+      [
+        print (word "Nadagdagan ang weight: " (ran - oldweight))
         update_edge_weight_path source target
       ]
-
-      ;print (word "Added Edge Weight")
     ]
   ]
 end
+
+to update_edge_weight_path2 [computed node1 node2]
+  show word "Before PEtable:" PEtable
+  let bilang 0
+  let costlist []
+  let mi 0
+  foreach PEtable [
+    set costlist []
+    if (length last ? > 0) and ( member? node1 item 1 ?) and (member? node2 item 1 ?) ; may problema dito, ksi baka ung isang node ay weight pala
+    [
+      print( word "UPDATE PATH WEIGHT DECREASE!!!!" bilang)
+      set costlist ?
+      set mi (first ? - computed)
+      set PEtable replace-item bilang PEtable replace-item 0 costlist mi
+     ]
+    set bilang bilang + 1
+  ]
+  show word "After PEtable: " PEtable
+end
+
 
 to update_edge_weight_path [node1 node2]
   print(word "update path with link: " node1 word " " node2)
   show word "Before PEtable:" PEtable
   let bilang 0
-  let flag false
   let source 99999
   let target 99999
   let costlist []
-  let nweight 99999
-  let cweight 99999
   foreach PEtable [
-    set flag false
     set costlist []
-    set nweight 99999
-    if (member? node1 item 1 ?) and (member? node2 item 1 ?) ; may problema dito, ksi baka ung isang node ay weight pala
+    if (length last ? > 0) and (member? node1 item 1 ?) and (member? node2 item 1 ?) ; may problema dito, ksi baka ung isang node ay weight pala
     [
       print( word "UPDATE PATH WEIGHT!!!!" bilang)
       set source item bilang Plist
       set target last (last ?)
-      set cweight first ?
-      show word "source: " source
-      show word "target: " target
       set costlist dijkstra source target
       show word "costlist" costlist
-      set nweight first costlist
-      show word "oldweight: " cweight
-      show word "new weight: " nweight
-      if nweight < cweight [
-        let oldlength length last ?
-        let newlength length last costlist
-        let remticks oldlength - newlength
-        show word "number of ticks added: " remticks
-        print( word "UPDATE SHORTER PATH WEIGHT!!!!")
-        set no-ticks no-ticks - (abs remticks)
-        set PEtable replace-item bilang PEtable costlist
-      ]
-
-    ]
+      let oldlength length last ?
+      let newlength length last costlist
+      let remticks oldlength - newlength
+      show word "number of ticks added: " remticks
+      set no-ticks no-ticks - remticks
+      set PEtable replace-item bilang PEtable costlist
+     ]
     set bilang bilang + 1
   ]
   show word "After PEtable: " PEtable
 end
 
-
-to delete_path_of_edge_removed [node1 node2]   ;update the pursuit plan of pursuers affected
-  print(word "update path with link: " node1 word " " node2)
-  show word "Before PEtable:" PEtable
-  let oldepath []
-  let bilang 0
-  let remticks 0
-  foreach PEtable [
-    if (member? node1 item 1 ?) and (member? node2 item 1 ?)
-    [
-      print( word "MAGDEDELETE NG PATH!!!!")
-        set oldepath ?
-        set remticks length last oldepath
-        set no-ticks no-ticks - remticks
-        set PEtable replace-item bilang PEtable replace-item 1 oldepath []
-    ]
-    set bilang bilang + 1
-  ]
-  show word "After PEtable: " PEtable
-end
 @#$#@#$#@
 GRAPHICS-WINDOW
 237
@@ -806,7 +793,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-3
+5
 1
 0
 Number
@@ -817,7 +804,7 @@ INPUTBOX
 191
 130
 no-of-links
-250
+300
 1
 0
 Number
@@ -840,7 +827,7 @@ SWITCH
 245
 show-weights?
 show-weights?
-1
+0
 1
 -1000
 
@@ -851,7 +838,7 @@ SWITCH
 295
 show-node?
 show-node?
-1
+0
 1
 -1000
 
