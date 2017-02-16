@@ -107,33 +107,33 @@ to setup-edges
     [
       ask one-of turtles
       [
-        let idnum 0
-        let cidnum 0
+        let source 0
+        let target 0
         let choice (min-one-of (other turtles with [not link-neighbor? myself])
           [distance myself])
         if choice != nobody [
           create-link-with choice
           ;print (word "link count: " count links )
           ask links[
-            set cidnum [who] of end1
-            set idnum [who] of end2
+            set source [who] of end1
+            set target [who] of end2
             let ran random 100
             set dir random 3
             ifelse dir = 0
             [
               set direction "to"
-              matrix:set cost idnum cidnum ran
+              matrix:set cost source target ran
             ]
             [
              ifelse dir = 1
              [
                set direction "from"
-               matrix:set cost cidnum idnum ran
+               matrix:set cost target source ran
              ]
              [
                set direction "both"
-               matrix:set cost idnum cidnum ran
-               matrix:set cost cidnum idnum ran
+               matrix:set cost source target ran
+               matrix:set cost target source ran
              ]
             ]
             set weight ran
@@ -142,7 +142,7 @@ to setup-edges
       ]
     ]
     ; make the network look a little prettier
-    repeat 15
+    repeat 10
     [
       layout-spring turtles links 0.3 (world-width / (sqrt no-of-nodes)) 1
     ]
@@ -161,7 +161,7 @@ to go
   [
      print (word "elapsed time: " no-sec)
      if count evaders > 0
-     [print (word "Evaders cannot be caught because it is isolated")]
+     [print (word "Evaders cannot be caught because it is isolated")]; kelangan pa ito iedit, pag hindi naman nag iinsert o nagddelete ng edge, kasi wala na talagang probability na mahuli ung evader na isolated so dapat pag gnun maidentify na kelangan na istop agad ang pursuit
      stop
   ]
   [
@@ -664,21 +664,58 @@ to dynamic_edge_direction
     ask one-of links [
       let source [who] of end1
       let target [who] of end2
-      let ran random 100
-      let oldweight weight
-      matrix:set cost source target ran
-      matrix:set cost target source ran
-      set weight ran
-      ifelse oldweight > ran
+      let ran random 3
+      matrix:set cost source target 99999
+      matrix:set cost target source 99999
+      ifelse ran = 0
       [
-        print (word "Nabawasan ang weight: " (oldweight - ran))
-
+        set direction "to"
+        matrix:set cost source target weight
       ]
       [
-        print (word "Nadagdagan ang weight: " (ran - oldweight))
+       ifelse ran = 1
+       [
+         set direction "from"
+         matrix:set cost target source weight
+       ]
+       [
+         set direction "both"
+         matrix:set cost source target weight
+         matrix:set cost target source weight
+       ]
       ]
+      print( word "CHANGE PATH DIRECTION!!!!")
+      update_directed_path source target
     ]
   ]
+end
+
+to update_directed_path [node1 node2]
+ print(word "update path with link: " node1 word " " node2)
+  show word "Before PEtable:" PEtable
+  let bilang 0
+  let source 99999
+  let target 99999
+  let costlist []
+  foreach PEtable [
+    set costlist []
+    if (length last ? > 0) and (member? node1 last ?) and (member? node2 last ?)
+    [
+      print( word "UPDATE PATH DIRECTION!!!!" bilang)
+      set source item bilang Plist
+      set target last (last ?)
+      set costlist dijkstra source target
+      show word "costlist" costlist
+      let oldlength length last ?
+      let newlength length last costlist
+      let remticks oldlength - newlength
+      show word "number of ticks added: " remticks
+      set no-ticks no-ticks - remticks
+      set PEtable replace-item bilang PEtable costlist
+     ]
+    set bilang bilang + 1
+  ]
+  show word "After PEtable: " PEtable
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -748,7 +785,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-25
+100
 1
 0
 Number
@@ -770,7 +807,7 @@ INPUTBOX
 191
 130
 no-of-links
-50
+200
 1
 0
 Number
@@ -781,7 +818,7 @@ INPUTBOX
 192
 193
 no-of-evaders
-0
+1
 1
 0
 Number
