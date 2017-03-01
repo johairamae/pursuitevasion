@@ -519,16 +519,20 @@ to nearestEtoP
           while [ecounter != num-evaders ]
           [
             set currente item ecounter e-list
+            ;show (word "pursuer: " currentp word "evader: " currente)
             set costlist lput dijkstra currentp currente costlist
             set ecounter ecounter + 1
+
+            ;show (word "costlist: " costlist)
           ]
+ ;           show (word "costlist: " costlist)
             set minvalue min map first costlist
             set minindex position minvalue map first costlist
             set templist item 1 item minindex costlist
            ; set evader1 item minindex Elist
             ;set PEtable lput (list evader1 templist) PEtable
 
-           ; show (word "costlist: " costlist)
+
            ; show (word "minvalue: " minvalue)
             let pindex find-index currentp ;paano naman kung dalawang pursuer at the same node?
             set PEtable replace-item  pindex PEtable (list minvalue templist)
@@ -575,6 +579,8 @@ to-report dijkstra [source target]
   let mini 0
   let d 0
   let j 0
+  let flag true
+  let oldstart start
   ;initialization of lists
   while [i != no-of-nodes]
   [
@@ -587,8 +593,9 @@ to-report dijkstra [source target]
   set selected replace-item start  selected 1
   set distlist replace-item start distlist 0
 
-  while [ (item target selected) = 0]
+  while [ (item target selected) = 0 and flag]
   [
+    set oldstart start
     set mini 99999
     set m 0
     set i 0
@@ -609,18 +616,26 @@ to-report dijkstra [source target]
     ]
    set start m
    set selected replace-item start selected 1
+   if oldstart = start
+   [ set flag false ]
   ]
   ;reversing the path to traverse from source to target
-  set start target
-  while [ start != -1 ]
+  ifelse flag
   [
-    set path fput start path
-    set start item start prev
+    set start target
+    while [ start != -1 ]
+    [
+      set path fput start path
+      set start item start prev
+    ]
+    set path remove-item 0 path
   ]
+  [
+    ;print (word "WALANG PATH!!RETURN EMPTY PATH!")
+    set path []
+  ]
+   ;print (word "cost to target: " item target distlist)
 
-  ;print (word "path " path)
-  ;print (word "cost to target: " item target distlist)
-  set path remove-item 0 path
   report (list item target distlist path)
 end
 
@@ -785,7 +800,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-100
+25
 1
 0
 Number
@@ -807,7 +822,7 @@ INPUTBOX
 191
 130
 no-of-links
-200
+27
 1
 0
 Number
@@ -818,16 +833,16 @@ INPUTBOX
 192
 193
 no-of-evaders
-1
+2
 1
 0
 Number
 
 SWITCH
-28
-212
-177
-245
+15
+201
+164
+234
 show-weights?
 show-weights?
 0
@@ -835,21 +850,21 @@ show-weights?
 -1000
 
 SWITCH
-38
-262
-171
-295
+15
+240
+148
+273
 show-node?
 show-node?
-1
+0
 1
 -1000
 
 MONITOR
-39
-332
-132
-377
+16
+276
+109
+321
 NIL
 count turtles
 17
@@ -857,10 +872,10 @@ count turtles
 11
 
 MONITOR
-49
-413
-130
-458
+15
+323
+96
+368
 NIL
 count links
 17
