@@ -3,7 +3,7 @@ turtles-own [ ispursuer? isevader? idnumber]
 links-own [ weight direction]
 breed [ pursuers pursuer ]
 breed [ evaders evader ]
-globals [AMatrix cost Plist Elist PEtable no-ticks no-sec time-traveled]
+globals [cost Plist Elist PEtable no-ticks no-sec time-traveled]
 
 to setup
                         ;; clear everything on canvas
@@ -123,12 +123,14 @@ to setup-edges
             [
               set direction "to"
               matrix:set cost source target ran
+              matrix:set cost target source 99999
             ]
             [
              ifelse dir = 1
              [
                set direction "from"
                matrix:set cost target source ran
+               matrix:set cost source target 99999
              ]
              [
                set direction "both"
@@ -506,8 +508,8 @@ to nearestEtoP
         let e-list []
         ask pursuelist [ set p-list lput who p-list ]
         ask evaderlist [ set e-list lput who e-list ]
-     ;   print (word "Evader count: " num-evaders word " list: " e-list )
-      ;  print (word "Pursuer count: " num-pursuers word " list: " p-list)
+        print (word "Evader count: " num-evaders word " list: " e-list )
+        print (word "Pursuer count: " num-pursuers word " list: " p-list)
         if num-evaders > 0 [
         set pcounter 0
         set ecounter 0
@@ -519,13 +521,13 @@ to nearestEtoP
           while [ecounter != num-evaders ]
           [
             set currente item ecounter e-list
-            ;show (word "pursuer: " currentp word "evader: " currente)
+            show (word "pursuer: " currentp word "evader: " currente)
             set costlist lput dijkstra currentp currente costlist
             set ecounter ecounter + 1
 
-            ;show (word "costlist: " costlist)
+            show (word "costlist: " costlist)
           ]
- ;           show (word "costlist: " costlist)
+            ;show (word "costlist: " costlist)
             set minvalue min map first costlist
             set minindex position minvalue map first costlist
             set templist item 1 item minindex costlist
@@ -631,7 +633,7 @@ to-report dijkstra [source target]
     set path remove-item 0 path
   ]
   [
-    ;print (word "WALANG PATH!!RETURN EMPTY PATH!")
+    print (word "WALANG PATH!!RETURN EMPTY PATH!")
     set path []
   ]
    ;print (word "cost to target: " item target distlist)
@@ -686,17 +688,20 @@ to dynamic_edge_direction
       [
         set direction "to"
         matrix:set cost source target weight
+        set color red
       ]
       [
        ifelse ran = 1
        [
          set direction "from"
          matrix:set cost target source weight
+         set color green
        ]
        [
          set direction "both"
          matrix:set cost source target weight
          matrix:set cost target source weight
+         set color white
        ]
       ]
       print( word "CHANGE PATH DIRECTION!!!!")
@@ -800,7 +805,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-25
+7
 1
 0
 Number
@@ -811,7 +816,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-5
+1
 1
 0
 Number
@@ -822,7 +827,7 @@ INPUTBOX
 191
 130
 no-of-links
-27
+6
 1
 0
 Number
@@ -833,7 +838,7 @@ INPUTBOX
 192
 193
 no-of-evaders
-2
+0
 1
 0
 Number
