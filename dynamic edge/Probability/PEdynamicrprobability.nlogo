@@ -18,7 +18,6 @@ to setup
        set no-ticks 0
        set no-sec 0
        set time-traveled 0
-       nw:generate-random turtles links no-of-nodes 0.5 [set shape "circle" set ispursuer? false set isevader? false set idnumber who]
        setup-nodes                     ;; a procedure to set nodes
        setup-edges                     ;; a procedure to set edges
        ask turtles [ set color gray]    ;; paint nodes red
@@ -86,10 +85,13 @@ to printElist
 end
 
 to setup-nodes
+  nw:generate-random turtles links no-of-nodes connection-probability
   set-default-shape turtles "circle"
-  ask turtles [ set ispursuer? false ]
-  ask turtles [set isevader? false]
-  ask turtles [ set idnumber who ]
+  ask turtles [
+    set ispursuer? false
+    set isevader? false
+     set idnumber who
+    ]
  ; create-turtles no-of-nodes ;; users give this number from the interface
  ; [
     ; for visual reasons, we don't put any nodes *too* close to the edges
@@ -811,13 +813,13 @@ to del_edge
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-237
+316
 10
-728
-600
+849
+649
 18
 21
-13.0
+14.14
 1
 10
 1
@@ -872,10 +874,10 @@ NIL
 0
 
 INPUTBOX
-15
-69
-103
-129
+17
+123
+105
+183
 no-of-nodes
 10
 1
@@ -883,65 +885,65 @@ no-of-nodes
 Number
 
 INPUTBOX
-14
-134
-103
-194
+16
+188
+105
+248
 no-of-pursuers
-2
+1
 1
 0
 Number
 
 INPUTBOX
-107
-70
-191
-130
-no-of-links
-0
-1
-0
-Number
-
-INPUTBOX
-106
-133
-192
+109
+124
 193
+184
+no-of-links
+8
+1
+0
+Number
+
+INPUTBOX
+108
+187
+194
+247
 no-of-evaders
-3
+0
 1
 0
 Number
 
 SWITCH
-15
-201
-164
-234
+19
+294
+168
+327
 show-weights?
 show-weights?
-1
+0
 1
 -1000
 
 SWITCH
-15
-240
-148
-273
+19
+333
+152
+366
 show-node?
 show-node?
-1
+0
 1
 -1000
 
 MONITOR
-16
-276
-109
-321
+201
+131
+294
+176
 NIL
 count turtles
 17
@@ -949,15 +951,40 @@ count turtles
 11
 
 MONITOR
-15
-323
-96
-368
+201
+193
+282
+238
 NIL
 count links
 17
 1
 11
+
+CHOOSER
+18
+72
+291
+117
+network-type
+network-type
+"static" "dynamic random edge" "dynamic weighted edge" "dynamic directed edge" "dynamic weighted and directed edge" "dynamic matthew effect" "dynamic probability" "dynamic probability f(n)" "dynamic vertex" "dynamic edge and vertex"
+6
+
+SLIDER
+16
+255
+212
+288
+connection-probability
+connection-probability
+0
+1
+0
+0.1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
