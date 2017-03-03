@@ -184,7 +184,11 @@ to go
        ]
       if tiktok = 0
       [
-         dynamic_edge_direction
+        let ran random 2
+        ifelse ran = 0
+        [dynamic_edge_direction]
+        [dynamic_edge_weight]
+
       ]
     ]
     set no-sec no-sec + timer
@@ -682,12 +686,12 @@ to dynamic_edge_direction
       let source [who] of end1
       let target [who] of end2
       let ran random 3
-      matrix:set cost source target 99999
-      matrix:set cost target source 99999
+
       ifelse ran = 0
       [
         set direction "to"
         matrix:set cost source target weight
+        matrix:set cost target source 99999
         set color red
       ]
       [
@@ -695,6 +699,7 @@ to dynamic_edge_direction
        [
          set direction "from"
          matrix:set cost target source weight
+         matrix:set cost source target 99999
          set color green
        ]
        [
@@ -706,6 +711,30 @@ to dynamic_edge_direction
       ]
       print( word "CHANGE PATH DIRECTION!!!!")
       update_directed_path source target
+    ]
+  ]
+end
+
+to dynamic_edge_weight
+  if count links > 0 [
+    ask one-of links [
+      let source [who] of end1
+      let target [who] of end2
+      let ran random 100
+      let oldweight weight
+      matrix:set cost source target ran
+      matrix:set cost target source ran
+      set weight ran
+      ifelse oldweight > ran
+      [
+        print (word "Nabawasan ang weight: " (oldweight - ran))
+        update_edge_weight_path2 (oldweight - ran) source target
+
+      ]
+      [
+        print (word "Nadagdagan ang weight: " (ran - oldweight))
+        update_directed_path source target
+      ]
     ]
   ]
 end
@@ -732,6 +761,24 @@ to update_directed_path [node1 node2]
       show word "number of ticks added: " remticks
       set no-ticks no-ticks - remticks
       set PEtable replace-item bilang PEtable costlist
+     ]
+    set bilang bilang + 1
+  ]
+  show word "After PEtable: " PEtable
+end
+to update_edge_weight_path2 [computed node1 node2]
+  show word "Before PEtable:" PEtable
+  let bilang 0
+  let costlist []
+  let mi 0
+  foreach PEtable [
+    set costlist []
+    if (length last ? > 0) and ( member? node1 item 1 ?) and (member? node2 item 1 ?) ; may problema dito, ksi baka ung isang node ay weight pala
+    [
+      print( word "UPDATE PATH WEIGHT DECREASE!!!!" bilang)
+      set costlist ?
+      set mi (first ? - computed)
+      set PEtable replace-item bilang PEtable replace-item 0 costlist mi
      ]
     set bilang bilang + 1
   ]
@@ -805,7 +852,7 @@ INPUTBOX
 103
 129
 no-of-nodes
-25
+256
 1
 0
 Number
@@ -816,7 +863,7 @@ INPUTBOX
 103
 194
 no-of-pursuers
-3
+10
 1
 0
 Number
@@ -827,7 +874,7 @@ INPUTBOX
 191
 130
 no-of-links
-30
+600
 1
 0
 Number
@@ -850,7 +897,7 @@ SWITCH
 234
 show-weights?
 show-weights?
-0
+1
 1
 -1000
 
@@ -861,7 +908,7 @@ SWITCH
 273
 show-node?
 show-node?
-0
+1
 1
 -1000
 
