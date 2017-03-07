@@ -88,7 +88,7 @@ to setup-nodes
     set isevader? false
      set idnumber who
     ]
-  ifelse network-type = "dynamic matthew effect" or network-type = "dynamic probability"
+  ifelse ((network-type = "dynamic matthew effect") or (network-type = "dynamic probability"))
   [
     ifelse network-type = "dynamic matthew effect"
     [nw:generate-preferential-attachment turtles links no-of-nodes]
@@ -107,7 +107,7 @@ end
 
 
 to setup-edges
-  ifelse network-type = "dynamic probability"
+  ifelse (network-type = "dynamic probability")
   [
     ask links[
       let source [who] of end1
@@ -123,7 +123,7 @@ to setup-edges
    let maxedges (no-of-nodes * (no-of-nodes - 1)) / 2
    show word "max number of edges: " maxedges
    let dir 2
-   ifelse no-of-links <= maxedges
+   ifelse (no-of-links <= maxedges)
    [
       while [ count links < no-of-links ] ;; num-links given by the user from interface
       [
@@ -135,12 +135,12 @@ to setup-edges
             [distance myself])
           if choice != nobody [
             create-link-with choice
-            ifelse network-type = "dynamic directed edge" or network-type = "dynamic weighted and directed edge"
+            ifelse ((network-type = "dynamic directed edge") or (network-type = "dynamic weighted and directed edge"))
             [
               ask links[
                 set source [who] of end1
                 set target [who] of end2
-                let ran random 100
+                let ran ((random 100) + 1)
                 set dir random 3
                 ifelse dir = 0
                 [
@@ -168,7 +168,7 @@ to setup-edges
               ask links[
                 set source [who] of end1
                 set target [who] of end2
-                let ran random 100
+                let ran ((random 100) + 1)
                 matrix:set cost source target ran
                 matrix:set cost target source ran
                 set direction "both"
@@ -200,6 +200,7 @@ to go
   let tiktok ticks
   set tiktok ticks mod 2
   print(word "evaders count: " count evaders word "tick: " ticks)
+
   ifelse ( (count evaders = 0 ) or (ticks >= 500))
   [
      print (word "elapsed time: " no-sec)
@@ -208,16 +209,16 @@ to go
      stop
   ]
   [
-    tick
     reset-timer
     evader-strategy
     if count evaders > 0
-    [ pursuit-strategy
+    [
+      pursuit-strategy
       ask links [
         ifelse show-weights?
         [ set label weight ]
         [ set label "" ]
-      ]
+       ]
       ask turtles [
        ifelse show-node?
         [ set label who ]
@@ -225,12 +226,12 @@ to go
        ]
       if tiktok = 0
       [
-        ifelse network-type = "dynamic directed edge" or network-type = "dynamic weighted and directed edge" or network-type = "dynamic weighted edge"
+        ifelse ((network-type = "dynamic directed edge") or (network-type = "dynamic weighted and directed edge") or (network-type = "dynamic weighted edge"))
         [
-          ifelse network-type = "dynamic directed edge"
+          ifelse (network-type = "dynamic directed edge")
           [dynamic_edge_direction]
           [
-            ifelse network-type = "dynamic weighted and directed edge"
+            ifelse (network-type = "dynamic weighted and directed edge")
             [
               let ran random 2
               ifelse ran = 0
@@ -241,11 +242,12 @@ to go
           ]
         ]
         [
-           if network-type != "static"
+           if network-type != ("static")
            [dynamic_edge_random]
         ]
 
       ]
+      tick
     ]
     set no-sec no-sec + timer
 
@@ -776,7 +778,7 @@ to dynamic_edge_weight
     ask one-of links [
       let source [who] of end1
       let target [who] of end2
-      let ran random 100
+      let ran ((random 100) + 1)
       let oldweight weight
       matrix:set cost source target ran
       matrix:set cost target source ran
@@ -864,7 +866,7 @@ to insert_edge
           ask links[
             set source [who] of end1
             set target [who] of end2
-            let ran random 100
+            let ran ((random 100) + 1)
 
             matrix:set cost source target ran
             matrix:set cost target source ran
@@ -987,7 +989,7 @@ INPUTBOX
 193
 184
 no-of-links
-18
+10
 1
 0
 Number
@@ -998,7 +1000,7 @@ INPUTBOX
 194
 247
 no-of-evaders
-2
+1
 1
 0
 Number
@@ -1055,7 +1057,7 @@ CHOOSER
 network-type
 network-type
 "static" "dynamic random edge" "dynamic weighted edge" "dynamic directed edge" "dynamic weighted and directed edge" "dynamic matthew effect" "dynamic probability" "dynamic probability f(n)" "dynamic vertex" "dynamic edge and vertex"
-6
+4
 
 SLIDER
 16
@@ -1066,7 +1068,7 @@ connection-probability
 connection-probability
 0
 1
-0
+0.5
 0.1
 1
 NIL
