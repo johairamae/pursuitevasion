@@ -20,10 +20,7 @@ to setup
        set time-traveled 0
        setup-nodes                     ;; a procedure to set nodes
        setup-edges                     ;; a procedure to set edges
-       ask turtles [ set color gray]    ;; paint nodes red
-;       ask links with [direction = "to"][set color red]     ;; paint edges white
-;       ask links with [direction = "from"][set color green]
-;       ask links with [direction = "both"][set color white]
+       ask turtles [ set color gray]   ;; paint nodes red
        initialize-pursuers
        initialize-evaders
        printAMatrix
@@ -85,29 +82,33 @@ to printElist
 end
 
 to setup-nodes
-  nw:generate-random turtles links no-of-nodes connection-probability
   set-default-shape turtles "circle"
   ask turtles [
     set ispursuer? false
     set isevader? false
      set idnumber who
     ]
- ; create-turtles no-of-nodes ;; users give this number from the interface
- ; [
-    ; for visual reasons, we don't put any nodes *too* close to the edges
- ;   setxy (random-xcor * 0.95) (random-ycor * 0.95)
- ; ]
+  ifelse network-type = "dynamic matthew effect" or network-type = "dynamic probability"
+  [
+    ifelse network-type = "dynamic matthew effect"
+    [nw:generate-preferential-attachment turtles links no-of-nodes]
+    [nw:generate-random turtles links no-of-nodes connection-probability]
+
+  ]
+  [
+    create-turtles no-of-nodes ;; users give this number from the interface
+    [
+      ; for visual reasons, we don't put any nodes *too* close to the edges
+      setxy (random-xcor * 0.95) (random-ycor * 0.95)
+    ]
+
+  ]
 end
 
 
 to setup-edges
-  let maxedges (no-of-nodes * (no-of-nodes - 1)) / 2
-  show word "max number of edges: " maxedges
-  let dir 2
-  ifelse no-of-links <= maxedges
+  ifelse network-type = "dynamic probability"
   [
-    ;let source 0
-    ;let target 0
     ask links[
       let source [who] of end1
       let target [who] of end2
@@ -117,16 +118,82 @@ to setup-edges
       matrix:set cost target source ran
       set weight ran
      ]
-    ; make the network look a little prettier
-    repeat 10
-    [
-      layout-spring turtles links 0.3 (world-width / (sqrt no-of-nodes)) 1
-    ]
-
   ]
   [
-    user-message ("no of edges is more than max no of edges allowed")
+   let maxedges (no-of-nodes * (no-of-nodes - 1)) / 2
+   show word "max number of edges: " maxedges
+   let dir 2
+   ifelse no-of-links <= maxedges
+   [
+      while [ count links < no-of-links ] ;; num-links given by the user from interface
+      [
+        ask one-of turtles
+        [
+          let source 0
+          let target 0
+          let choice (min-one-of (other turtles with [not link-neighbor? myself])
+            [distance myself])
+          if choice != nobody [
+            create-link-with choice
+            ifelse network-type = "dynamic directed edge" or network-type = "dynamic weighted and directed edge"
+            [
+              ask links[
+                set source [who] of end1
+                set target [who] of end2
+                let ran random 100
+                set dir random 3
+                ifelse dir = 0
+                [
+                  set direction "to"
+                  matrix:set cost source target ran
+                  matrix:set cost target source 99999
+                ]
+                [
+                  ifelse dir = 1
+                  [
+                    set direction "from"
+                    matrix:set cost target source ran
+                    matrix:set cost source target 99999
+                  ]
+                  [
+                    set direction "both"
+                    matrix:set cost source target ran
+                    matrix:set cost target source ran
+                  ]
+                ]
+                set weight ran
+              ]
+            ]
+            [
+              ask links[
+                set source [who] of end1
+                set target [who] of end2
+                let ran random 100
+                matrix:set cost source target ran
+                matrix:set cost target source ran
+                set direction "both"
+                set weight ran
+              ]
+            ]
+          ]
+        ]
+      ]
+      ask links with [direction = "to"][set color red]     ;; paint edges
+      ask links with [direction = "from"][set color green]
+      ask links with [direction = "both"][set color white]
+   ]
+   [
+     user-message ("no of edges is more than max no of edges allowed")
+   ]
   ]
+
+  repeat 10
+  [
+    layout-spring turtles links 0.3 (world-width / (sqrt no-of-nodes)) 1
+  ]
+
+
+
 end
 
 to go
@@ -158,7 +225,26 @@ to go
        ]
       if tiktok = 0
       [
-        dynamic_edge_random
+        ifelse network-type = "dynamic directed edge" or network-type = "dynamic weighted and directed edge" or network-type = "dynamic weighted edge"
+        [
+          ifelse network-type = "dynamic directed edge"
+          [dynamic_edge_direction]
+          [
+            ifelse network-type = "dynamic weighted and directed edge"
+            [
+              let ran random 2
+              ifelse ran = 0
+              [dynamic_edge_direction]
+              [dynamic_edge_weight]
+            ]
+            [dynamic_edge_weight]
+          ]
+        ]
+        [
+           if network-type != "static"
+           [dynamic_edge_random]
+        ]
+
       ]
     ]
     set no-sec no-sec + timer
@@ -879,7 +965,7 @@ INPUTBOX
 105
 183
 no-of-nodes
-10
+15
 1
 0
 Number
@@ -901,7 +987,7 @@ INPUTBOX
 193
 184
 no-of-links
-8
+18
 1
 0
 Number
@@ -912,7 +998,7 @@ INPUTBOX
 194
 247
 no-of-evaders
-0
+2
 1
 0
 Number
@@ -935,7 +1021,7 @@ SWITCH
 366
 show-node?
 show-node?
-0
+1
 1
 -1000
 
