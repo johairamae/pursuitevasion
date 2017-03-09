@@ -109,10 +109,11 @@ end
 to setup-edges
   ifelse (network-type = "dynamic probability")
   [
+    set no-of-links count links
     ask links[
       let source [who] of end1
       let target [who] of end2
-      let ran random 100
+      let ran ((random 100) + 1 )
       set direction "both"
       matrix:set cost source target ran
       matrix:set cost target source ran
@@ -129,13 +130,16 @@ to setup-edges
       [
         ask one-of turtles
         [
-          let source 0
-          let target 0
           let choice (min-one-of (other turtles with [not link-neighbor? myself])
-            [distance myself])
+            [distance myself]); selects the nearest turtle to him to make a link
           if choice != nobody [
             create-link-with choice
-            ifelse ((network-type = "dynamic directed edge") or (network-type = "dynamic weighted and directed edge"))
+          ]
+        ]
+      ]
+      let source 0
+      let target 0
+      ifelse ((network-type = "dynamic directed edge") or (network-type = "dynamic weighted and directed edge"))
             [
               ask links[
                 set source [who] of end1
@@ -175,9 +179,6 @@ to setup-edges
                 set weight ran
               ]
             ]
-          ]
-        ]
-      ]
       ask links with [direction = "to"][set color red]     ;; paint edges
       ask links with [direction = "from"][set color green]
       ask links with [direction = "both"][set color white]
@@ -201,7 +202,7 @@ to go
   set tiktok ticks mod 2
   print(word "evaders count: " count evaders word "tick: " ticks)
 
-  ifelse ( (count evaders = 0 ) or (ticks >= 500))
+  ifelse ( (count evaders = 0 ) or (ticks >= 11500))
   [
      print (word "elapsed time: " no-sec)
      if count evaders > 0
@@ -397,7 +398,6 @@ to pursuit-strategy
 
   ifelse no-of-nodes = 2
   [
-   ; printPlist
     move-to-node item 0 Plist item 0 Elist 0
   ]
   [
@@ -435,12 +435,7 @@ to pursuit-strategy
         set PEtable replace-item mlindex PEtable replace-item 1 oldlist pursuerpath
       ]
 
-     ; show word "PEtable: " PEtable
-    ;  show word "target node: " targetnode
-     ; printPlist
-     ; show word "mlindex: " mlindex
       move-to-node item mlindex Plist targetnode mlindex
-     ; show word "pursuer index: " find-index item mlindex Plist
       set no-ticks no-ticks - 1
     ]
     [
@@ -490,7 +485,6 @@ to initialize-evaders
 
         if ispursuer? != true
         [
-         ; set color blue
           set breed evaders
           set isevader? true
           set Elist lput who Elist
@@ -514,7 +508,6 @@ to nearestEtoP
   show word "enter nearestEtoP function " 0
   let pcounter 0
   let ecounter 0
-  ;let co 999999
   let currentp 99999
   let currente 99999
   let costlist []
@@ -539,9 +532,6 @@ to nearestEtoP
       set minvalue min map first costlist
       set minindex position minvalue map first costlist
       set templist item 1 item minindex costlist
-      ;set evader1 item minindex Elist
-      ;show (word "costlist: " costlist)
-      ;show (word "minvalue: " minvalue)
       set PEtable replace-item pcounter PEtable (list minvalue templist)
       set pcounter pcounter + 1
       set ecounter 0
@@ -552,14 +542,10 @@ to nearestEtoP
     ;if initially connected ang graph
     let clusters nw:weak-component-clusters
     print(word "DISCONNECTED GRAPH!!!!")
-   ; print(word "Number of Clusters: " length clusters)
-   ; print (word "hanapin ang agent sa cluster na disconnected")
-
     ;; loop through the clusters and find pursuers and evaders
     (foreach clusters [
       let cluster ?1
       let cluster-list sort cluster
-    ;  print (word "Size of cluster: " length cluster-list word "list: " cluster-list)
       if any? cluster with [breed = evaders or breed = pursuers] ;if the cluster has pursuers and evaders
       [
         let num-evaders count cluster with [breed = evaders]
@@ -570,8 +556,6 @@ to nearestEtoP
         let e-list []
         ask pursuelist [ set p-list lput who p-list ]
         ask evaderlist [ set e-list lput who e-list ]
-        print (word "Evader count: " num-evaders word " list: " e-list )
-        print (word "Pursuer count: " num-pursuers word " list: " p-list)
         if num-evaders > 0 [
         set pcounter 0
         set ecounter 0
@@ -583,21 +567,13 @@ to nearestEtoP
           while [ecounter != num-evaders ]
           [
             set currente item ecounter e-list
-            show (word "pursuer: " currentp word "evader: " currente)
             set costlist lput dijkstra currentp currente costlist
             set ecounter ecounter + 1
-
-            show (word "costlist: " costlist)
-          ]
-            ;show (word "costlist: " costlist)
+       ]
             set minvalue min map first costlist
             set minindex position minvalue map first costlist
             set templist item 1 item minindex costlist
-           ; set evader1 item minindex Elist
-            ;set PEtable lput (list evader1 templist) PEtable
 
-
-           ; show (word "minvalue: " minvalue)
             let pindex find-index currentp ;paano naman kung dalawang pursuer at the same node?
             set PEtable replace-item  pindex PEtable (list minvalue templist)
             set pcounter pcounter + 1
@@ -631,8 +607,8 @@ to nearestEtoP
 end
 
 to-report dijkstra [source target]
- ; print(word "pursuer: " source)
- ; print(word "evader: " target)
+  print(word "pursuer: " source)
+  print(word "evader: " target)
   let distlist []
   let selected []
   let prev []
@@ -698,9 +674,7 @@ to-report dijkstra [source target]
     print (word "WALANG PATH!!RETURN EMPTY PATH!")
     set path []
   ]
-   ;print (word "cost to target: " item target distlist)
-
-  report (list item target distlist path)
+ report (list item target distlist path)
 end
 
 to-report is-disconnected
@@ -799,7 +773,8 @@ end
 
 to dynamic_edge_random
   let ran random 2
-  ifelse ran = 0 [ del_edge ]
+  ifelse ran = 0
+  [ del_edge ]
   [ insert_edge ]
 end
 
@@ -812,7 +787,7 @@ to update_path [node1 node2]
   let costlist []
   foreach PEtable [
     set costlist []
-    if (length last ? > 0) and (member? node1 last ?) and (member? node2 last ?)
+    if (((length last ? > 0) and (member? node1 last ?) and (member? node2 last ?)) or ((member? node1 Plist) and (member? node2 last ?)) or ((member? node2 Plist) and (member? node1 last ?)) )
     [
       print( word "UPDATE PATH !!!!" bilang)
       set source item bilang Plist
@@ -850,39 +825,37 @@ to update_edge_weight_path2 [computed node1 node2]
 end
 
 to insert_edge
-  ;check if source exists
-  ;check if destination exists
   let insedge 0
+  let target 0
+  let source 0
   while [insedge = 0]
   [
-  ask one-of turtles
-      [
-        let source 0
-        let target 0
-        let choice (min-one-of (other turtles with [not link-neighbor? myself])
-          [distance myself])
-        if choice != nobody [
-          create-link-with choice
-          ask links[
-            set source [who] of end1
-            set target [who] of end2
-            let ran ((random 100) + 1)
+    ask one-of turtles
+    [
+       set source who
+       let choice (min-one-of (other turtles with [not link-neighbor? myself])[distance myself])
 
-            matrix:set cost source target ran
-            matrix:set cost target source ran
-            set weight ran
-          ]
+       if choice != nobody [
+          create-link-with choice
+          ask choice [set target who]
           set no-of-links no-of-links + 1
           print (word "LINK INSERTED:"  )
           set insedge insedge + 1
-          update_path source target
+        ]
+    ]
+    ask link source target [
+      let ran ((random 100) + 1)
+      matrix:set cost source target ran
+      matrix:set cost target source ran
+      set weight ran
+      set direction "both"
+    ]
+    update_path source target
 
-        ]
-        repeat 10
-        [
-          layout-spring turtles links 0.3 (world-width / (sqrt no-of-nodes)) 1
-        ]
-      ]
+    repeat 10
+    [
+      layout-spring turtles links 0.3 (world-width / (sqrt no-of-nodes)) 1
+    ]
   ]
 end
 to del_edge
@@ -967,7 +940,7 @@ INPUTBOX
 105
 183
 no-of-nodes
-15
+526
 1
 0
 Number
@@ -978,7 +951,7 @@ INPUTBOX
 105
 248
 no-of-pursuers
-1
+100
 1
 0
 Number
@@ -989,7 +962,7 @@ INPUTBOX
 193
 184
 no-of-links
-10
+1502
 1
 0
 Number
@@ -1000,7 +973,7 @@ INPUTBOX
 194
 247
 no-of-evaders
-1
+0
 1
 0
 Number
@@ -1056,8 +1029,8 @@ CHOOSER
 117
 network-type
 network-type
-"static" "dynamic random edge" "dynamic weighted edge" "dynamic directed edge" "dynamic weighted and directed edge" "dynamic matthew effect" "dynamic probability" "dynamic probability f(n)" "dynamic vertex" "dynamic edge and vertex"
-4
+"static" "dynamic random edge" "dynamic weighted edge" "dynamic directed edge" "dynamic weighted and directed edge" "dynamic matthew effect" "dynamic probability"
+1
 
 SLIDER
 16
