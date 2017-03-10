@@ -841,14 +841,15 @@ to insert_edge
           set no-of-links no-of-links + 1
           print (word "LINK INSERTED:"  )
           set insedge insedge + 1
+          ask link source target [
+          let ran ((random 100) + 1)
+          matrix:set cost source target ran
+          matrix:set cost target source ran
+          set weight ran
+          set direction "both"
         ]
     ]
-    ask link source target [
-      let ran ((random 100) + 1)
-      matrix:set cost source target ran
-      matrix:set cost target source ran
-      set weight ran
-      set direction "both"
+
     ]
     update_path source target
 
@@ -874,9 +875,9 @@ to del_edge
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-316
+310
 10
-849
+843
 649
 18
 21
@@ -940,7 +941,7 @@ INPUTBOX
 105
 183
 no-of-nodes
-526
+4
 1
 0
 Number
@@ -951,7 +952,7 @@ INPUTBOX
 105
 248
 no-of-pursuers
-100
+1
 1
 0
 Number
@@ -962,7 +963,7 @@ INPUTBOX
 193
 184
 no-of-links
-1502
+6
 1
 0
 Number
@@ -1001,9 +1002,9 @@ show-node?
 -1000
 
 MONITOR
-201
+195
 131
-294
+288
 176
 NIL
 count turtles
@@ -1030,7 +1031,7 @@ CHOOSER
 network-type
 network-type
 "static" "dynamic random edge" "dynamic weighted edge" "dynamic directed edge" "dynamic weighted and directed edge" "dynamic matthew effect" "dynamic probability"
-1
+5
 
 SLIDER
 16
@@ -1041,7 +1042,7 @@ connection-probability
 connection-probability
 0
 1
-0.5
+0.8
 0.1
 1
 NIL
