@@ -775,7 +775,13 @@ to dynamic_edge_random
   let ran random 2
   ifelse ran = 0
   [ del_edge ]
-  [ insert_edge ]
+  [
+    let maxedges (no-of-nodes * (no-of-nodes - 1)) / 2
+    ifelse (no-of-links < maxedges)
+    [ insert_edge ]
+    [del_edge]
+
+  ]
 end
 
 to update_path [node1 node2]
@@ -847,17 +853,18 @@ to insert_edge
           matrix:set cost target source ran
           set weight ran
           set direction "both"
+          update_path source target
         ]
     ]
 
     ]
-    update_path source target
 
     repeat 10
     [
       layout-spring turtles links 0.3 (world-width / (sqrt no-of-nodes)) 1
     ]
   ]
+
 end
 to del_edge
   if count links > 0 [
@@ -941,7 +948,7 @@ INPUTBOX
 105
 183
 no-of-nodes
-4
+2
 1
 0
 Number
@@ -963,7 +970,7 @@ INPUTBOX
 193
 184
 no-of-links
-6
+1
 1
 0
 Number
@@ -1031,7 +1038,7 @@ CHOOSER
 network-type
 network-type
 "static" "dynamic random edge" "dynamic weighted edge" "dynamic directed edge" "dynamic weighted and directed edge" "dynamic matthew effect" "dynamic probability"
-5
+6
 
 SLIDER
 16
